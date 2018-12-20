@@ -49,7 +49,7 @@ export function observable(target: any, key: string | symbol)
  * Proxies an object.
  *
  * Proxied objects that have their properies marked as observable will have their changes
- * set to the handler object.
+ * sent to the handler object.
  *
  * @param item The object to proxy.
  * @param handler The handler that will recieve events when properties on item change.

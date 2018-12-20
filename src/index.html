@@ -16,10 +16,18 @@
         <h1>Hello World!</h1>
 
         Now to make the rest of the application!
-        <div id="test" tau-class-red="isRed" tau-text="text" tau-custom="custom"></div>
+        <div id="test">
+            <div>ID: <span tau-text="id"></span></div>
+            <div>Name: <span tau-text="name"></span></div>
+        </div>
     </body>
 
     <script type="text/javascript">
+        const { Template } = require('./tau/Template');
         const Component = require('./tau/Component');
+
+        let comp = new Component.Component(new Template({ selector: '#test' }), Component.Widget);
+        comp.model.id = 5;
+        comp.model.name = "John Doe";
     </script>
 </html>

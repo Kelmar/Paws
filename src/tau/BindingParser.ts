@@ -86,6 +86,8 @@ class AttributeBindingTarget extends BindingTargetBase implements IBindingTarget
             // Remove attribute on any falsy result, except zero
             this.item.removeAttribute(this.name);
         }
+        else if (typeof res == "boolean")
+            this.item.setAttribute(this.name, this.name); // E.g.: checked="checked"
         else
             this.item.setAttribute(this.name, res.toString());
     }
@@ -102,11 +104,11 @@ class TextBindingTarget extends BindingTargetBase implements IBindingTarget
     {
         let [found, res] = this.resolve(model);
 
-        if (!found || !res)
+        if (!found || res === undefined || res === null)
             this.item.innerHTML = '';
         else
         {
-            this.item.innerHTML = res
+            this.item.innerHTML = res.toString()
                 .replace('&', '&amp;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;')
@@ -128,10 +130,10 @@ class HtmlBindingTarget extends BindingTargetBase implements IBindingTarget
     {
         let [found, res] = this.resolve(model);
 
-        if (!found || !res)
+        if (!found || res === undefined || res === null)
             this.item.innerHTML = '';
         else
-            this.item.innerHTML = res;
+            this.item.innerHTML = res.toString();
     }
 }
 
