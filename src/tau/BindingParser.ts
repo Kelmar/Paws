@@ -45,6 +45,7 @@ export class PathDataBinding implements IDataBinding
         for (let segment of this.path)
         {
             res = mapping[segment];
+            mapping = res;
 
             if (res == null)
                 return [false, null];

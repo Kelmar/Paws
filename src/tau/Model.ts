@@ -8,7 +8,7 @@ interface ObjectMapping
 }
 
 /**
- * Interface for classes that handle object change events.
+ * Interface for classes that handles object change events.
  * 
  * Proxy handlers handle change events on proxied object properties.
  */
@@ -48,8 +48,8 @@ export function observable(target: any, key: string | symbol)
 /**
  * Proxies an object.
  *
- * Proxied objects will have any properites marked as "observable" sent to the handler object in
- * addition to the object itself.
+ * Proxied objects that have their properies marked as observable will have their changes
+ * set to the handler object.
  *
  * @param item The object to proxy.
  * @param handler The handler that will recieve events when properties on item change.
