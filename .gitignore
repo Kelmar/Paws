@@ -81,3 +81,6 @@ typings/
 
 # Exclude package-lock.json file used by NPM
 package-lock.json
+
+# Excluding build artifacts.
+dist/

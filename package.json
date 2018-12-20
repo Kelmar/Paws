@@ -24,5 +24,13 @@
   "bugs": {
     "url": "https://github.com/Kelmar/Paws/issues"
   },
-  "homepage": "https://github.com/Kelmar/Paws#readme"
+  "homepage": "https://github.com/Kelmar/Paws#readme",
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "electron": "^3.0.13",
+    "gulp": "^4.0.0",
+    "gulp-typescript": "^5.0.0",
+    "types": "^0.1.1",
+    "typescript": "^3.2.2"
+  }
 }
