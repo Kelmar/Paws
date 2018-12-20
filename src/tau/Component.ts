@@ -1,5 +1,6 @@
 import { promisify } from 'util';
 import * as fs from 'fs';
+import { BindingParser, IBindingTarget } from './BindingParser';
 
 const readFile = promisify(fs.readFile);
 
@@ -13,6 +14,7 @@ export class ComponentOptions
 export class Component
 {
     private m_node: HTMLElement;
+    private m_bindings: IBindingTarget[];
 
     public readonly options: ComponentOptions;
 
@@ -59,29 +61,17 @@ export class Component
         }
     }
 
-    private parseItem(item: Element)
+    private parseBindings(): void
     {
-        for (var attr of item.attributes)
-        {
-            console.log('Attribute: ' + attr.name);
-        }
+        let parser = new BindingParser();
+        this.m_bindings = parser.Parse(this.m_node);
 
-        for (var child of item.children)
-            this.parseItem(child);
+        console.debug(`Found ${this.m_bindings.length} total data binding(s)`);
     }
 
-    private parseBindings()
+    public apply(value: any): void
     {
-        this.parseItem(this.m_node);
-    }
-
-    public test(value: string): void
-    {
-        this.m_node.innerText = value;
+        for (let target of this.m_bindings)
+            target.apply(value);
     }
 }
-
-var c = new Component({
-    template: "<div tau-class='foo'></div>"
-});
-
