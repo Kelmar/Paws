@@ -1,12 +1,23 @@
 import { app, BrowserWindow } from "electron";
+import IDisposable from "./common/lifecycle";
 
-export default class Application
+export default class Application implements IDisposable
 {
+    private window: BrowserWindow;
+
     public constructor()
     {
         app.on('ready', () => this.createWindow());
         app.on('activate', () => this.createWindow());
         app.on('window-all-closed', () => this.onAllWindowsClosed());
+    }
+
+    public dispose()
+    {
+        if (this.window != null)
+            this.window.close();
+
+        this.window = null;
     }
 
     public quit(exitCode?: number): void
@@ -19,13 +30,22 @@ export default class Application
 
     private createWindow(): void
     {
-        var win: BrowserWindow = new BrowserWindow({width: 800, height: 600, show: false});
+        if (this.window != null)
+            return;
 
-        win.loadFile(`${__dirname}/index.html`);
+        this.window = new BrowserWindow({width: 800, height: 600, show: false});
 
-        win.on('ready-to-show', () =>
+        this.window.loadFile(`${__dirname}/index.html`);
+
+        this.window.on('close', () =>
         {
-            win.show();
+            
+            this.window = null;
+        });
+
+        this.window.on('ready-to-show', () =>
+        {
+            this.window.show();
         })
     }
 

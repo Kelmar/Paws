@@ -84,3 +84,6 @@ package-lock.json
 
 # Excluding build artifacts.
 dist/
+
+# Excluding sandbox (test scripts and other things)
+sandbox/

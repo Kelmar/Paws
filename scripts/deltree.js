@@ -15,7 +15,7 @@ function delItem(baseName, entry)
     let fullName = path.join(baseName, entry.name);
 
     if (entry.isDirectory())
-        return delTree(name);
+        return delTree(fullName);
     else
     {
         console.log('rm: ' + fullName);
