@@ -4,6 +4,9 @@
   "description": "A simple log viewer",
   "main": "index.js",
   "scripts": {
+    "build": "gulp build",
+    "clean": "gulp clean",
+    "start": "electron ./dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,7 +23,7 @@
     "viewer"
   ],
   "author": "",
-  "license": "BSD-3-Clause",
+  "license": "BSD-3-Clause-Clear",
   "bugs": {
     "url": "https://github.com/Kelmar/Paws/issues"
   },
