@@ -1,62 +1,20 @@
+/* ================================================================================================================= */
+
+import { IDataBinding, parseDataBinding } from "./DataBinding";
+
+/* ================================================================================================================= */
 
 const NAMESPACE: string = "tau";
 const ATTR_PREFIX: string = NAMESPACE + '-';
 
-const IDENT_PATTERN: RegExp = /^[A-Z|_][\w|_|]*$/i;
+/* ================================================================================================================= */
 
 export interface IBindingTarget
 {
     apply(model: any): void;
 }
 
-export interface IDataBinding
-{
-    resolve(model: any): [boolean, any];
-}
-
-// No operation data binding
-export class NoopDataBinding implements IDataBinding
-{
-    private constructor()
-    {
-    }
-
-    public static instance = new NoopDataBinding();
-
-    public resolve(model: any): [boolean, any]
-    {
-        return [true, ''];
-    }
-}
-
-export class PathDataBinding implements IDataBinding
-{
-    constructor(readonly path: string[])
-    {
-        if (path.length == 0)
-            throw new Error('Logic error, PathDataBinding got a path of zero length!');
-    }
-
-    public resolve(model: any): [boolean, any]
-    {
-        let mapping: {[key: string]: any} = model;
-        let res: any;
-
-        for (let segment of this.path)
-        {
-            res = mapping[segment];
-            mapping = res;
-
-            if (res == null)
-                return [false, null];
-        }
-
-        if (res instanceof Function)
-            return [true, res()];
-
-        return [true, res];
-    }
-}
+/* ================================================================================================================= */
 
 export abstract class BindingTargetBase
 {
@@ -69,6 +27,8 @@ export abstract class BindingTargetBase
         return this.dataBinding.resolve(model);
     }
 }
+
+/* ================================================================================================================= */
 
 class AttributeBindingTarget extends BindingTargetBase implements IBindingTarget
 {
@@ -92,6 +52,8 @@ class AttributeBindingTarget extends BindingTargetBase implements IBindingTarget
             this.item.setAttribute(this.name, res.toString());
     }
 }
+
+/* ================================================================================================================= */
 
 class TextBindingTarget extends BindingTargetBase implements IBindingTarget
 {
@@ -119,6 +81,8 @@ class TextBindingTarget extends BindingTargetBase implements IBindingTarget
     }
 }
 
+/* ================================================================================================================= */
+
 class HtmlBindingTarget extends BindingTargetBase implements IBindingTarget
 {
     constructor(readonly item: Element, readonly name: string, dataBinding: IDataBinding)
@@ -136,6 +100,8 @@ class HtmlBindingTarget extends BindingTargetBase implements IBindingTarget
             this.item.innerHTML = res.toString();
     }
 }
+
+/* ================================================================================================================= */
 
 class ClassBindingTarget extends BindingTargetBase implements IBindingTarget
 {
@@ -185,10 +151,14 @@ class ClassBindingTarget extends BindingTargetBase implements IBindingTarget
     }
 }
 
+/* ================================================================================================================= */
+
 interface BindingFactory
 {
     (item: Element, name: string, dataBinding: IDataBinding): IBindingTarget
 }
+
+/* ================================================================================================================= */
 
 class AttributeBindingMap
 {
@@ -202,6 +172,8 @@ class AttributeBindingMap
             this.pattern = new RegExp('^' + pattern + '$', "i");
     }
 }
+
+/* ================================================================================================================= */
 
 export class BindingParser
 {
@@ -225,26 +197,6 @@ export class BindingParser
         this.m_attributeBindings.push(new AttributeBindingMap(pattern, factory));
     }
 
-    private parseDataBinding(value: string): IDataBinding
-    {
-        // We don't handle anything more complex than simple dot notated identifiers.
-        let parts = value.split('.').map(x => x.trim());
-
-        if (parts.length == 0)
-            return NoopDataBinding.instance;
-
-        for (let i = 0; i < parts.length; ++i)
-        {
-            if (!IDENT_PATTERN.test(parts[i]))
-            {
-                this.m_log.warn(`Ignoring invalid data binding expresion: ${value}`);
-                return NoopDataBinding.instance;
-            }
-        }
-
-        return new PathDataBinding(parts);
-    }
-
     private bindAttribute(item: Element, name: string, value: string): IBindingTarget
     {
         if (!name.toLowerCase().startsWith(ATTR_PREFIX))
@@ -258,7 +210,7 @@ export class BindingParser
             return;
         }
 
-        let dataBinding: IDataBinding = this.parseDataBinding(value);
+        let dataBinding: IDataBinding = parseDataBinding(value);
 
         let mapping: AttributeBindingMap = this.m_attributeBindings.find(x => x.pattern.test(name));
         return mapping == null ? new AttributeBindingTarget(item, name, dataBinding) : mapping.factory(item, name, dataBinding);
@@ -316,3 +268,5 @@ export class BindingParser
         return this.parseItem(item);
     }
 }
+
+/* ================================================================================================================= */
