@@ -1,4 +1,5 @@
 import IDisposable from "../common/lifecycle";
+import { Observable } from 'rxjs';
 
 export enum ConnectionState
 {
@@ -8,7 +9,7 @@ export enum ConnectionState
 
 export interface ITransportListener extends IDisposable
 {
-    listen(): void;
+    listen(): Observable<ITransportConnection>;
 }
 
 export interface ITransportConnection extends IDisposable
@@ -18,4 +19,9 @@ export interface ITransportConnection extends IDisposable
     readonly state: ConnectionState;
 
     send(data: any): void;
+
+    disconnect(): void;
+
+    recv(): Observable<string>;
+    disconnected(): Observable<void>;
 }

@@ -1,6 +1,8 @@
-import { promisify } from 'util';
 import * as fs from 'fs';
+import { promisify } from 'util';
+
 import { BindingParser, IBindingTarget } from './BindingParser';
+import { ILogger, LogManager } from '../common/logging';
 
 const readFile = promisify(fs.readFile);
 
@@ -11,6 +13,8 @@ export interface ITemplate
 
 export class Template implements ITemplate
 {
+    private m_log: ILogger = LogManager.getLogger('paws.tau.template');
+
     private m_node: HTMLElement;
     private m_bindings: IBindingTarget[];
 
@@ -36,11 +40,12 @@ export class Template implements ITemplate
             (await readFile(this.options.templateFile)).toString() :
             this.options.template;
 
-        console.log('template: ' + template);
+        this.m_log.debug('template: ' + template);
         
         if (template != null)
         {
-            console.log('Runing DOMParser on template....')
+            this.m_log.debug('Runing DOMParser on template....')
+
             try
             {
                 let parser = new DOMParser();
@@ -48,10 +53,10 @@ export class Template implements ITemplate
             }
             catch (e)
             {
-                console.log("Error: ", e);
+                this.m_log.error(e);
             }
-            console.log("Loaded:");
-            console.log(this.m_node);
+
+            this.m_log.info("Loaded:", this.m_node);
         }
         else
         {
@@ -64,7 +69,7 @@ export class Template implements ITemplate
         let parser = new BindingParser();
         this.m_bindings = parser.Parse(this.m_node);
 
-        console.debug(`Found ${this.m_bindings.length} total data binding(s)`);
+        this.m_log.debug(`Found ${this.m_bindings.length} total data binding(s)`);
     }
 
     public apply(value: any): void

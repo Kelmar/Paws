@@ -1,3 +1,5 @@
+import { LogManager, ILogger } from "../common/logging";
+
 /* ================================================================================================================= */
 
 const IDENT_PATTERN: RegExp = /^[A-Z|_][\w|_|]*$/i;
@@ -95,7 +97,9 @@ export function parseDataBinding(binding: string): IDataBinding
     {
         if (!IDENT_PATTERN.test(parts[i]))
         {
-            console.warn(`Ignoring invalid data binding expresion: ${binding}`);
+            let log: ILogger = LogManager.getLogger('paws.tau.dataBinding.parseDataBinding');
+            log.warn(`Ignoring invalid data binding expresion: ${binding}`);
+
             return NoopDataBinding.instance;
         }
     }

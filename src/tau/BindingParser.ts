@@ -1,6 +1,7 @@
 /* ================================================================================================================= */
 
 import { IDataBinding, parseDataBinding } from "./DataBinding";
+import { ILogger, LogManager } from "../common/logging";
 
 /* ================================================================================================================= */
 
@@ -177,13 +178,12 @@ class AttributeBindingMap
 
 export class BindingParser
 {
-    private m_log: any
+    private m_log: ILogger = LogManager.getLogger('paws.tau.bindingParser');
 
     private m_attributeBindings: AttributeBindingMap[];
 
     constructor ()
     {
-        this.m_log = console;
         this.m_attributeBindings = [];
 
         this.addAttributeBindingTarget("text", TextBindingTarget);
