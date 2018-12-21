@@ -1,13 +1,16 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import IDisposable from "./common/lifecycle";
+import { IpcListener } from "./backend/IpcTransport";
+
 
 export default class Application implements IDisposable
 {
     private window: BrowserWindow;
+    private listener: IpcListener;
 
     public constructor()
     {
-        app.on('ready', () => this.createWindow());
+        app.on('ready', () => this.onReady());
         app.on('activate', () => this.createWindow());
         app.on('window-all-closed', () => this.onAllWindowsClosed());
     }
@@ -16,6 +19,9 @@ export default class Application implements IDisposable
     {
         if (this.window != null)
             this.window.close();
+
+        if (this.listener != null)
+            this.listener.dispose();
 
         this.window = null;
     }
@@ -28,12 +34,20 @@ export default class Application implements IDisposable
         app.quit();
     }
 
+    private onReady(): void
+    {
+        this.listener = new IpcListener();
+        this.listener.listen();
+
+        this.createWindow();
+    }
+
     private createWindow(): void
     {
         if (this.window != null)
             return;
-
-        this.window = new BrowserWindow({width: 800, height: 600, show: false});
+            
+        this.window = new BrowserWindow({ width: 800, height: 600, show: false });
 
         this.window.loadFile(`${__dirname}/index.html`);
 
