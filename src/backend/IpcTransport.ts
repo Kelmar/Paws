@@ -1,5 +1,5 @@
 import { ipcMain, WebContents, webContents } from 'electron';
-import { fromEvent, Observable } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
 import { ITransportListener, ITransportConnection, ConnectionState } from "./Transport";
@@ -58,40 +58,42 @@ class ConnectionManager implements IDisposable
 
 export class IpcConnection implements ITransportConnection, IDisposable
 {
-    private m_log: ILogger = LogManager.getLogger('paws.backend.ipcConnection');
+    private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcConnection');
+    private readonly m_msgId: string;
     
     private m_renderer: WebContents;
-    private m_msgId: string;
+    private m_subject: Subject<string>;
     
     constructor(renderer: WebContents, readonly manager: ConnectionManager)
     {
         this.m_renderer = renderer;
         
         this.setId(this.manager.addConnection(this));
-
-        this.m_msgId = "msg:" + this.id;
+        this.m_msgId = 'msg:' + this.id;
        
         this.setState(ConnectionState.Connected);
+
+        this.m_subject = new Subject<string>();
+
+        ipcMain.on(this.m_msgId, (x :string) => this.m_subject.next(x));
+        ipcMain.once('disconnect:' + this.id, () => this.onDisconnect());
 
         this.rawSend('connected', this.id);
 
         this.m_log.info("New connection: ", this.id);
     }
 
-    public recv(): Observable<string>
+    private onDisconnect(): void
     {
-        return fromEvent(ipcMain, this.m_msgId).pipe(
-            filter(() => this.state == ConnectionState.Connected),
-            map(x => x as string)
-        );
+        ipcMain.removeAllListeners(this.m_msgId);
+        this.setState(ConnectionState.Disconnected);
+        this.m_subject.complete();
+        this.cleanUp();
     }
 
-    public disconnected(): Observable<void>
+    public recv(): Observable<string>
     {
-        return fromEvent(ipcMain, "disconnect:" + this.id).pipe(
-            filter(() => this.state == ConnectionState.Connected),
-            map(() => this.setState(ConnectionState.Disconnected))
-        );
+        return this.m_subject;
     }
 
     public send(data: any): void
@@ -130,18 +132,27 @@ export class IpcConnection implements ITransportConnection, IDisposable
         if (this.state == ConnectionState.Disconnected)
             return;
 
-        this.rawSend('disconnect');
-        
-        this.manager.removeConnection(this);
         this.setState(ConnectionState.Disconnected);
+        ipcMain.removeAllListeners(this.m_msgId);
+
+        this.m_subject.complete();
+        this.rawSend('disconnect');
 
         this.m_log.debug(`Client ${this.id} disconnected.`);
+
+        this.cleanUp();
+    }
+
+    private cleanUp(): void
+    {
+        this.manager.removeConnection(this);
+        this.m_subject = null;
+        this.m_renderer = null;
     }
 
     public dispose()
     {
         this.disconnect();        
-        this.m_renderer = null;
     }
 }
 
@@ -159,6 +170,8 @@ export class IpcListener implements ITransportListener, IDisposable
     public dispose()
     {
         this.m_log.info('IPC listener shutting down...');
+
+        ipcMain.removeAllListeners('connect');
 
         this.m_manager.dispose();
         this.m_manager = null;

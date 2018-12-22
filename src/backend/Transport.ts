@@ -23,5 +23,4 @@ export interface ITransportConnection extends IDisposable
     disconnect(): void;
 
     recv(): Observable<string>;
-    disconnected(): Observable<void>;
 }

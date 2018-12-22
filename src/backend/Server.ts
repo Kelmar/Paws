@@ -42,28 +42,26 @@ export default class Server implements IDisposable
         this.m_log.debug(`New connection from ${client.id}`);
 
         let recvSub: Subscription;
-        let discSub: Subscription;
 
-        recvSub = client.recv().subscribe(msg => this.onRecv(client, msg));
-        discSub = client.disconnected().subscribe(() =>
-        {
-            this.onDisconnect(client);
+        recvSub = client.recv().subscribe(
+            { 
+                next: msg => this.onRecv(client, msg),
+                complete: () => 
+                {
+                    this.onDisconnect(client);
 
-            client = null;
-
-            this.m_connSubscribe.remove(recvSub);
-            this.m_connSubscribe.remove(discSub);
-
-            recvSub = null;
-            discSub = null;
-        });
+                    this.m_connSubscribe.remove(recvSub);
+                    recvSub = null;
+                    client = null;
+                }
+            });
 
         this.m_connSubscribe.add(recvSub);
-        this.m_connSubscribe.add(discSub);
     }
 
     private onRecv(client: ITransportConnection, message: string): void
     {
+        this.m_log.debug(`Client ${client.id} sent: ${message}`);
     }
 
     private onDisconnect(client: ITransportConnection): void
