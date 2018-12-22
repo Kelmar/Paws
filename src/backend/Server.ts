@@ -1,11 +1,13 @@
-import { ipcMain, desktopCapturer } from 'electron';
+/* ================================================================================================================= */
+
 import { Subscription } from 'rxjs';
 
-import { ITransportListener, ITransportConnection } from './Transport';
-import { IpcListener } from './IpcTransport';
+import { Transport, ITransportListener, ITransportConnection } from './Transport';
 import { ILogger, LogManager } from '../common/logging';
 
 import IDisposable from '../common/lifecycle';
+
+/* ================================================================================================================= */
 
 export default class Server implements IDisposable
 {
@@ -18,10 +20,7 @@ export default class Server implements IDisposable
     {
         this.m_log.info("Server is starting...");
 
-        if (ipcMain != null)
-            this.m_listener = new IpcListener();
-        else
-            throw new Error("WebSocket version not implemented yet!");
+        this.m_listener = Transport.listenerFactory();
 
         this.m_connSubscribe = this.m_listener
             .listen()
@@ -62,6 +61,7 @@ export default class Server implements IDisposable
     private onRecv(client: ITransportConnection, message: string): void
     {
         this.m_log.debug(`Client ${client.id} sent: ${message}`);
+        client.send(message); // Echo server
     }
 
     private onDisconnect(client: ITransportConnection): void
@@ -69,3 +69,5 @@ export default class Server implements IDisposable
         this.m_log.debug(`Client disconnected: ${client.id}`);
     }
 }
+
+/* ================================================================================================================= */

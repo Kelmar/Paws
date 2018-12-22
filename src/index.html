@@ -23,6 +23,11 @@
     </body>
 
     <script type="text/javascript">
+        const { IPC } = require('./backend/IpcTransport');
+        const { Transport } = require('./backend/Transport');
+
+        IPC.init();
+
         const { Template } = require('./tau/Template');
         const Component = require('./tau/Component');
 
