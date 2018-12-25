@@ -37,6 +37,8 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "chokidar": "^2.0.4",
+    "event-stream": "^4.0.1",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.3.3"
   }

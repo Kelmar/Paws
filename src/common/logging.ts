@@ -1,3 +1,10 @@
+/* ================================================================================================================= */
+/* ================================================================================================================= */
+
+require('./string');
+
+/* ================================================================================================================= */
+
 export enum Level
 {
     All     = 0,
@@ -11,52 +18,87 @@ export enum Level
     Fatal   = 7
 }
 
+/* ================================================================================================================= */
+
+export class LogMessage
+{
+    public readonly levelName: string;
+    public readonly timestamp: Date;
+    public readonly text: string;
+    public readonly properties: any;
+
+    constructor(readonly level: Level, text: string, args?: any)
+    {
+        this.levelName = Level[level];
+        this.timestamp = new Date();
+        this.text = args !== null ? text.formatPegasus(args) : text;
+        this.properties = args;
+    }
+}
+
+/* ================================================================================================================= */
+
+export interface ILogTarget
+{
+    write(message: LogMessage): void;
+}
+
 export interface ILogger
 {
     isEnabled(level: Level): boolean;
 
-    write(level: Level, msg: any, ...args: any[]): void;
+    write<T>(level: Level, msg: any, args?: T): void;
 
-    verbose(msg: any, ...args: any[]): void;
-    trace  (msg: any, ...args: any[]): void;
-    debug  (msg: any, ...args: any[]): void;
-    info   (msg: any, ...args: any[]): void;
-    warn   (msg: any, ...args: any[]): void;
-    error  (msg: any, ...args: any[]): void;
-    fatal  (msg: any, ...args: any[]): void;
+    verbose<T>(msg: any, args?: T): void;
+    trace  <T>(msg: any, args?: T): void;
+    debug  <T>(msg: any, args?: T): void;
+    info   <T>(msg: any, args?: T): void;
+    warn   <T>(msg: any, args?: T): void;
+    error  <T>(msg: any, args?: T): void;
+    fatal  <T>(msg: any, args?: T): void;
 }
 
-class ConsoleLogger implements ILogger
+class ConsoleTarget implements ILogTarget
 {
-    isEnabled(level: Level): boolean { return true; }
-
-    write(level: Level, msg: any, ...args: any[]): void
+    public write(message: LogMessage): void
     {
-        switch (level)
-        {
-        case Level.Verbose: console.trace('VERBOSE: ' + msg, ...args); break;
-        case Level.Trace  : console.trace(msg, ...args); break;
-        case Level.Debug  : console.debug(msg, ...args); break;
-        case Level.Info   : console.info (msg, ...args); break;
-        case Level.Warn   : console.warn (msg, ...args); break;
-        case Level.Error  : console.error(msg, ...args); break;
-        case Level.Fatal  : console.error('FATAL: ' + msg, ...args); break;
-        }
+        console.log("{timestamp} {levelName,5}: {text}".formatPegasus(message));
+    }
+}
+
+class Logger implements ILogger
+{
+    constructor(readonly target: ILogTarget)
+    {
     }
 
-    verbose(msg: any, ...args: any[]): void { this.write(Level.Verbose, msg, ...args); }
-    trace  (msg: any, ...args: any[]): void { this.write(Level.Trace  , msg, ...args); }
-    debug  (msg: any, ...args: any[]): void { this.write(Level.Debug  , msg, ...args); }
-    info   (msg: any, ...args: any[]): void { this.write(Level.Info   , msg, ...args); }
-    warn   (msg: any, ...args: any[]): void { this.write(Level.Warn   , msg, ...args); }
-    error  (msg: any, ...args: any[]): void { this.write(Level.Error  , msg, ...args); }
-    fatal  (msg: any, ...args: any[]): void { this.write(Level.Fatal  , msg, ...args); }
+    isEnabled(level: Level): boolean { return true; }
+
+    write<T>(level: Level, msg: any, args?: T): void
+    {
+        let message = new LogMessage(level, msg, args);
+
+        this.target.write(message);
+    }
+
+    verbose<T>(msg: any, args?: T): void { this.write(Level.Verbose, msg, args); }
+    trace  <T>(msg: any, args?: T): void { this.write(Level.Trace  , msg, args); }
+    debug  <T>(msg: any, args?: T): void { this.write(Level.Debug  , msg, args); }
+    info   <T>(msg: any, args?: T): void { this.write(Level.Info   , msg, args); }
+    warn   <T>(msg: any, args?: T): void { this.write(Level.Warn   , msg, args); }
+    error  <T>(msg: any, args?: T): void { this.write(Level.Error  , msg, args); }
+    fatal  <T>(msg: any, args?: T): void { this.write(Level.Fatal  , msg, args); }
 }
+
+let defaultTarget: ConsoleTarget = null;
 
 export module LogManager
 {
     export function getLogger(loggerName: string): ILogger
     {
-        return new ConsoleLogger();
+        if (defaultTarget == null)
+            defaultTarget = new ConsoleTarget();
+
+        return new Logger(defaultTarget);
     }
 }
