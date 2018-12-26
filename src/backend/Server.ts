@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { Transport, ITransportListener, ITransportConnection } from './Transport';
 import { ILogger, LogManager } from '../common/logging';
 
-import IDisposable from '../common/lifecycle';
+import { IDisposable } from '../lepton';
 
 /* ================================================================================================================= */
 

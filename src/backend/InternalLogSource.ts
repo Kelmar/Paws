@@ -1,9 +1,9 @@
 /* ================================================================================================================= */
 
-import { Observable, Observer, Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
 
 import * as LogSource from './LogSource';
-import { url } from "inspector";
+
 import { ILogTarget, LogMessage } from "../common/logging";
 
 /* ================================================================================================================= */

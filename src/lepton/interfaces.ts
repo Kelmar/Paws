@@ -1,8 +1,6 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import IDisposable from "../common/lifecycle";
-
 import { Lifetime } from "./consts";
 
 /* ================================================================================================================= */
@@ -10,6 +8,11 @@ import { Lifetime } from "./consts";
 export interface Type<T>
 {
     new(...args: any[]): T;
+}
+
+export interface IDisposable
+{
+    dispose(): void;
 }
 
 export interface IRegistrationSyntax

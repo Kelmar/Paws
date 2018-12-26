@@ -3,7 +3,7 @@
 
 import { Observable } from 'rxjs';
 
-import IDisposable from "../common/lifecycle";
+import { IDisposable } from "../lepton";
 import { LogManager } from '../common/logging';
 
 /* ================================================================================================================= */

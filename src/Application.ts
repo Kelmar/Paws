@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from "electron";
-import IDisposable from "./common/lifecycle";
+import { IDisposable } from "./lepton";
 
 export default class Application implements IDisposable
 {

@@ -3,13 +3,12 @@
 
 import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } from 'electron';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { map, filter } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 import { ITransportListener, ITransportConnection, ConnectionState, Transport } from "./Transport";
 import { LogManager, ILogger } from '../common/logging';
 
-import IDisposable from '../common/lifecycle';
-import { disconnect } from 'cluster';
+import { IDisposable } from '../lepton';
 
 /* ================================================================================================================= */
 

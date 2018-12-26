@@ -3,7 +3,8 @@
 
 export { Lifetime } from './consts';
 
-export * from "./decorators";
+export * from "./lifecycle";
+export { inject } from "./decorators";
 export * from "./interfaces";
 
 /* ================================================================================================================= */
