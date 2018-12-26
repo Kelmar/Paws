@@ -1,7 +1,10 @@
 const assert = require('assert');
 
-import { testFixture, test, testCase, runAllTests } from './decorators';
+import { runAllTests } from './decorators';
 
+import './injection_tests';
+
+/*
 @testFixture()
 class ArrayTests
 {
@@ -13,5 +16,6 @@ class ArrayTests
         assert.equal([1,2,3].indexOf(value), -1);
     }
 }
+*/
 
 runAllTests();

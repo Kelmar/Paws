@@ -117,7 +117,7 @@ export function testFixture(description?: string): (target: any, ...args: any[])
 
             if (testCount > 0)
             {
-                console.debug(`Adding ${testCount} ${info.name} test(s)...`);
+                //console.debug(`Adding ${testCount} ${info.name} test(s)...`);
                 g_fixtures.push(info);
             }
             else
