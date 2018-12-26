@@ -19,10 +19,7 @@ export function inject(token: symbol): (target: any, key: string, index?: number
 {
     return (target: any, key: string, index?: number): void =>
     {
-        let metadata: InjectionMetadata = Reflect.getOwnMetadata(INJECTION_METADATA, target);
-
-        if (metadata == null)
-            metadata = new InjectionMetadata();
+        let metadata: InjectionMetadata = Reflect.getOwnMetadata(INJECTION_METADATA, target) || new InjectionMetadata();
 
         if (index !== undefined)
             metadata.parameters.set(index, token);

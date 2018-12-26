@@ -3,9 +3,11 @@
 const DIST_DIR = 'dist';
 
 const { series, parallel } = require('gulp');
-const { src, dest, pipe } = require('gulp');
+const { src, dest } = require('gulp');
 const { promisify } = require('util');
 const { delTree } = require('./scripts/deltree');
+
+const mocha = require('gulp-mocha');
 
 const tsc = require('gulp-typescript');
 const path = require('path');
@@ -45,7 +47,14 @@ function compile()
 
 var build = series(makeDistDir, parallel(copyResources, compile))
 
+function runTests()
+{
+    return src(DIST_DIR + '/tests/index.js', {read: false})
+        .pipe(mocha({ reporter: 'nyan' }));
+}
+
 exports.clean = clean;
 exports.build = build;
 exports.rebuild = series(clean, build);
+exports.test = series(build, runTests);
 exports.default = build;
