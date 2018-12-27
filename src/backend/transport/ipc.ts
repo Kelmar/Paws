@@ -50,7 +50,7 @@ class ConnectionBase
 
 /* ================================================================================================================= */
 
-export class IpcConnection implements IClient, IDisposable
+export class IpcClient implements IClient, IDisposable
 {
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcConnection');
     private readonly m_subject: Subject<any> = new Subject<any>();
@@ -187,10 +187,10 @@ export class IpcListener implements IListener, IDisposable
         return rval;
     }
 
-    private newConnection(sender: WebContents): IpcConnection
+    private newConnection(sender: WebContents): IpcClient
     {
         var base = new ConnectionBase(ipcMain, sender);
-        var rval = new IpcConnection(base, ++g_uniqueId);
+        var rval = new IpcClient(base, ++g_uniqueId);
 
         return rval;
     }
@@ -209,7 +209,7 @@ export module IPC
             .with(Lifetime.Singleton);
 
         container.register(IClient)
-            .to(IpcConnection)
+            .to(IpcClient)
             .with(Lifetime.Scoped);
     }
 }

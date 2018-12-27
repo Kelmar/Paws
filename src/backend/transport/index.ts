@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 
 import { IDisposable, IContainer } from "../../lepton";
 import { IPC } from './ipc';
+import { configureNullTransport } from './null';
 
 /* ================================================================================================================= */
 
@@ -53,8 +54,10 @@ export module transport
 {
     export function configure(container: IContainer)
     {
-        if (Electron.ipcMain != null)
+        if (process.versions.electron != null)
             IPC.configure(container);
+        else
+            configureNullTransport(container);
     }
 }
 

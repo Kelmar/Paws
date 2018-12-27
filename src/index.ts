@@ -19,12 +19,15 @@ transport.configure(container);
 
 using (container.beginScope(), scope =>
 {
-    var server: Server = new Server();
+    let server: Server = new Server();
     scope.buildUp(server);
 
     server.start();
 
-    var app: Application = new Application();
+    if (process.versions.electron != null)
+        var app: Application = new Application();
+
+    server.run();
 });
 
 /* ================================================================================================================= */

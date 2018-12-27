@@ -14,7 +14,7 @@ export default class Server implements IDisposable
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.server');
 
     @inject(IListener)
-    private readonly listener: IListener
+    private readonly listener: IListener;
 
     private m_connSubscribe: Subscription;
 
@@ -37,6 +37,22 @@ export default class Server implements IDisposable
             .subscribe(client => this.connect(client));
     }
 
+    public run(): void
+    {
+        // I very much do not like this....
+        let cb: Function;
+        
+        cb = () =>
+        {
+            if (this.m_connSubscribe.closed)
+                return;
+
+            setTimeout(cb, 100);
+        };
+
+        cb();
+    }
+
     private connect(client: IClient): void
     {
         this.m_log.debug(`New connection from ${client.id}`);
@@ -44,17 +60,17 @@ export default class Server implements IDisposable
         let recvSub: Subscription;
 
         recvSub = client.recv().subscribe(
-            { 
-                next: msg => this.onRecv(client, msg),
-                complete: () => 
-                {
-                    this.onDisconnect(client);
+        {
+            next: msg => this.onRecv(client, msg),
+            complete: () =>
+            {
+                this.onDisconnect(client);
 
-                    this.m_connSubscribe.remove(recvSub);
-                    recvSub = null;
-                    client = null;
-                }
-            });
+                this.m_connSubscribe.remove(recvSub);
+                recvSub = null;
+                client = null;
+            }
+        });
 
         this.m_connSubscribe.add(recvSub);
     }
