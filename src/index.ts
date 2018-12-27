@@ -19,4 +19,3 @@ using (container.beginScope(), scope =>
 
     var app: Application = new Application();
 });
-

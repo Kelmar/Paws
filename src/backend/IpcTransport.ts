@@ -5,7 +5,7 @@ import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } 
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { ITransportListener, ITransportConnection, ConnectionState, IListener, IClient } from "./Transport";
+import { ConnectionState, IListener, IClient } from "./Transport";
 import { LogManager, ILogger } from '../common/logging';
 
 import { IContainer, IDisposable, Lifetime } from '../lepton';
@@ -50,7 +50,7 @@ class ConnectionBase
 
 /* ================================================================================================================= */
 
-export class IpcConnection implements ITransportConnection, IDisposable
+export class IpcConnection implements IClient, IDisposable
 {
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcConnection');
     private readonly m_subject: Subject<any> = new Subject<any>();
@@ -79,7 +79,7 @@ export class IpcConnection implements ITransportConnection, IDisposable
 
     public dispose()
     {
-        this.disconnect();        
+        this.disconnect();
     }
 
     public get id(): number
@@ -158,7 +158,7 @@ export class IpcConnection implements ITransportConnection, IDisposable
 
 /* ================================================================================================================= */
 
-export class IpcListener implements ITransportListener, IDisposable
+export class IpcListener implements IListener, IDisposable
 {
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcListener');
 
@@ -173,7 +173,7 @@ export class IpcListener implements ITransportListener, IDisposable
         ipcMain.removeAllListeners('connect');
     }
 
-    public listen(): Observable<ITransportConnection>
+    public listen(): Observable<IClient>
     {
         var rval = fromEvent(ipcMain, 'connect')
             .pipe(

@@ -6,8 +6,6 @@ import { Observable } from 'rxjs';
 import { IDisposable } from "../lepton";
 
 /* ================================================================================================================= */
-// Interfaces
-/* ================================================================================================================= */
 
 export const IListener: unique symbol = Symbol("paws:backend:transport:listener");
 export const IClient: unique symbol = Symbol("paws:backend:transport:client");
@@ -23,15 +21,17 @@ export enum ConnectionState
 }
 
 /* ================================================================================================================= */
+// Interfaces
+/* ================================================================================================================= */
 
-export interface ITransportListener extends IDisposable
+export interface IListener extends IDisposable
 {
-    listen(): Observable<ITransportConnection>;
+    listen(): Observable<IClient>;
 }
 
 /* ================================================================================================================= */
 
-export interface ITransportConnection extends IDisposable
+export interface IClient extends IDisposable
 {
     readonly id: any;
     

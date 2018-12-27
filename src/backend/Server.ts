@@ -2,7 +2,7 @@
 
 import { Subscription } from 'rxjs';
 
-import { ITransportListener, ITransportConnection, IListener } from './Transport';
+import { IClient, IListener } from './Transport';
 import { ILogger, LogManager } from '../common/logging';
 
 import { IDisposable, inject } from '../lepton';
@@ -14,7 +14,7 @@ export default class Server implements IDisposable
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.server');
 
     @inject(IListener)
-    private readonly listener: ITransportListener
+    private readonly listener: IListener
 
     private m_connSubscribe: Subscription;
 
@@ -37,7 +37,7 @@ export default class Server implements IDisposable
             .subscribe(client => this.connect(client));
     }
 
-    private connect(client: ITransportConnection): void
+    private connect(client: IClient): void
     {
         this.m_log.debug(`New connection from ${client.id}`);
 
@@ -59,13 +59,13 @@ export default class Server implements IDisposable
         this.m_connSubscribe.add(recvSub);
     }
 
-    private onRecv(client: ITransportConnection, message: string): void
+    private onRecv(client: IClient, message: string): void
     {
         this.m_log.debug(`Client ${client.id} sent: ${message}`);
         client.send(message); // Echo server
     }
 
-    private onDisconnect(client: ITransportConnection): void
+    private onDisconnect(client: IClient): void
     {
         this.m_log.debug(`Client disconnected: ${client.id}`);
     }
