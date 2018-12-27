@@ -1,11 +1,11 @@
+/* ================================================================================================================= */
+/* ================================================================================================================= */
+
 import "reflect-metadata";
 
-const OBSERVABLES : symbol = Symbol("observables");
+const OBSERVABLES : symbol = Symbol("tau:observables");
 
-interface ObjectMapping
-{
-    [key: string]: any
-}
+/* ================================================================================================================= */
 
 /**
  * Interface for classes that handles object change events.
@@ -23,6 +23,8 @@ export interface IProxyHandler
      */
     setValue(name: string, value: any, oldValue: any): void;
 }
+
+/* ================================================================================================================= */
 
 /**
  * Defines a property as being observable.
@@ -45,6 +47,8 @@ export function observable(target: any, key: string | symbol)
     obsMeta.push(key);
 }
 
+/* ================================================================================================================= */
+
 /**
  * Proxies an object.
  *
@@ -60,7 +64,7 @@ export function Proxy<T>(item: T, handler: IProxyHandler): T
         return null;
 
     let proxied: T = Object.create(Object.getPrototypeOf(item));
-    let mapping: ObjectMapping = item;
+    let mapping: any = item;
 
     let inHandler: boolean = false;
 
@@ -88,7 +92,7 @@ export function Proxy<T>(item: T, handler: IProxyHandler): T
         }
     }
 
-    function buildProxyProperty(name: string, mapping: ObjectMapping)
+    function buildProxyProperty(name: string, mapping: any)
     {
         let type = Reflect.getMetadata("design:type", item, name);
 
@@ -132,7 +136,7 @@ export function Proxy<T>(item: T, handler: IProxyHandler): T
             }
 
             // Force proxied object's dispose to call the actual dispose method.
-            let proxyMap: ObjectMapping = proxied;
+            let proxyMap: any = proxied;
             proxyMap["dispose"] = mapping["dispose"];
             proxyMap = null;
         }
@@ -141,3 +145,4 @@ export function Proxy<T>(item: T, handler: IProxyHandler): T
     return proxied;
 }
 
+/* ================================================================================================================= */

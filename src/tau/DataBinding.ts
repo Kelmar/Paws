@@ -1,25 +1,9 @@
 import { LogManager, ILogger } from "../common/logging";
+import { IDataBinding } from "./interfaces";
 
 /* ================================================================================================================= */
 
 const IDENT_PATTERN: RegExp = /^[A-Z|_][\w|_|]*$/i;
-
-/* ================================================================================================================= */
-
-/**
- * Represents a binding to a value within a model.
- */
-export interface IDataBinding
-{
-    /**
-     * Resolve the data binding to the given model's value.
-     *
-     * @param model The model to resolve to.
-     *
-     * @returns A tuple, the boolean indicates if the value was found, the any is the value resolved (if available)
-     */
-    resolve(model: any): [boolean, any];
-}
 
 /* ================================================================================================================= */
 
@@ -69,8 +53,14 @@ export class PathDataBinding implements IDataBinding
             res = mapping[segment];
             mapping = res;
 
-            if (res == null)
-                return [false, null];
+            if (res === undefined)
+                return [false, undefined];
+
+            if (res === null)
+            {
+                // We treat a "null" as found, the property is set, but has no value.
+                return [true, null];
+            }
         }
 
         if (res instanceof Function)

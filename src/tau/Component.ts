@@ -1,5 +1,5 @@
 import { Proxy, IProxyHandler, observable } from './Model';
-import { ITemplate } from './Template';
+import { ITemplate } from './interfaces';
 
 export class Component<TModel> implements IProxyHandler
 {

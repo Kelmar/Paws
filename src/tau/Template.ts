@@ -1,15 +1,28 @@
+/* ================================================================================================================= */
+/* ================================================================================================================= */
+
 import * as fs from 'fs';
 import { promisify } from 'util';
 
-import { BindingParser, IBindingTarget } from './BindingParser';
 import { ILogger, LogManager } from '../common/logging';
+
+import { ITemplate, IBindingTarget } from './interfaces';
+import { BindingParser } from './BindingParser';
+
+/* ================================================================================================================= */
 
 const readFile = promisify(fs.readFile);
 
-export interface ITemplate
+/* ================================================================================================================= */
+
+export class TemplateOptions
 {
-    apply(model: any): void;
+    public template?: string;
+    public templateFile?: string;
+    public selector?: string;
 }
+
+/* ================================================================================================================= */
 
 export class Template implements ITemplate
 {
@@ -40,29 +53,29 @@ export class Template implements ITemplate
             (await readFile(this.options.templateFile)).toString() :
             this.options.template;
 
-        this.m_log.debug('template: ' + template);
+        this.parseString(template);
+    }
 
-        if (template != null)
-        {
-            this.m_log.debug('Runing DOMParser on template....')
-
-            try
-            {
-                let parser = new DOMParser();
-                this.m_node = parser.parseFromString(this.options.template, "text/xml").documentElement;
-            }
-            catch (e)
-            {
-                this.m_log.error(e);
-                this.m_node = this.templateError(e);
-            }
-
-            this.m_log.info("Loaded:", this.m_node);
-        }
-        else
-        {
+    private parseString(template: string): void
+    {
+        if (template == null)
             throw new Error("No selector or template specified in options.");
+
+        this.m_log.verbose("template: " + template);
+        this.m_log.debug("Runing DOMParser on template....");
+
+        try
+        {
+            let parser = new DOMParser();
+            this.m_node = parser.parseFromString(this.options.template, "text/xml").documentElement;
         }
+        catch (e)
+        {
+            this.m_log.error(e);
+            this.m_node = this.templateError(e);
+        }
+
+        this.m_log.info("Loaded:", this.m_node);
     }
 
     private templateError(e: Error): HTMLElement
@@ -87,7 +100,7 @@ export class Template implements ITemplate
         let parser = new BindingParser();
         this.m_bindings = parser.Parse(this.m_node);
 
-        this.m_log.debug(`Found ${this.m_bindings.length} total data binding(s)`);
+        this.m_log.debug("Found {length} total data binding(s)", this.m_bindings);
     }
 
     public apply(value: any): void
@@ -97,9 +110,4 @@ export class Template implements ITemplate
     }
 }
 
-export class TemplateOptions
-{
-    public template?: string;
-    public templateFile?: string;
-    public selector?: string;
-}
+/* ================================================================================================================= */
