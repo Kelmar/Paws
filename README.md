@@ -1,5 +1,5 @@
 # Paws
-A simple log viewer
+A (not so) simple log viewer
 
 Nothing here yet....
 

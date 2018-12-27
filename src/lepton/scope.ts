@@ -62,12 +62,12 @@ export class Scope implements IScope
         }
     }
 
-    private wireUpInternal<T>(regInfo: RegistrationInfo, target: T): void
+    private manage<T>(regInfo: RegistrationInfo, target: T): void
     {
-        this.buildUp<T>(target);
-
         if (regInfo.lifetime == this.managedLifetime)
             this.m_managed.set(regInfo.name, target);
+        else if (this.parent != null)
+            this.parent.manage(regInfo, target);
     }
 
     private tryResolve<T>(name: symbol): T
@@ -104,7 +104,8 @@ export class Scope implements IScope
             throw new Error(`Symbol '${symStr}' not registered.`);
         }
 
-        this.wireUpInternal(regInfo, target);
+        this.buildUp<T>(target);
+        this.manage(regInfo, target);
 
         return target;
     }
@@ -123,9 +124,15 @@ export class Scope implements IScope
 
         rval = this.createNew(regInfo);
 
-        this.wireUpInternal(regInfo, rval);
+        this.buildUp<T>(rval);
+        this.manage(regInfo, rval);
+        
+        return rval;
+    }
 
-        return this.wireUp(name, rval);
+    public beginScope(): IScope
+    {
+        return new Scope(this.container, this.managedLifetime, this);
     }
 }
 

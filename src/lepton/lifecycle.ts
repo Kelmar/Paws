@@ -5,10 +5,24 @@ import { IDisposable } from "./interfaces";
 
 /* ================================================================================================================= */
 
+/**
+ * Describes how an object's lifetime should be manaaged.
+ */
 export enum Lifetime
 {
+    /**
+     * A new object is created on each request to resolve().
+     */
     Transient,
+
+    /**
+     * A new object is created bound to the lifetime of the current scope.
+     */
     Scoped,
+
+    /**
+     * A single object instance is created once and only once per container.
+     */
     Singleton
 }
 

@@ -35,9 +35,11 @@ export interface IResolver
 {
     /**
      * Injects values into an existing object.
-     * 
+     *
      * The object will not be added to the managed container.
-     * 
+     *
+     * Unlike wireUp(), this function does not require that the target type be registered.
+     *
      * @param target The object to have its properties injected.
      */
     buildUp<T>(target: T): T
@@ -54,7 +56,7 @@ export interface IResolver
 
     /**
      * Resolves a new or existing object of the given type.
-     * 
+     *
      * @param name The type to build.
      */
     resolve<T>(name: symbol): T;
@@ -77,6 +79,10 @@ export interface IContainer extends IDisposable
  */
 export interface IScope extends IResolver, IDisposable
 {
+    /**
+     * Creates a nested lifetime scope.
+     */
+    beginScope(): IScope;
 }
 
 /* ================================================================================================================= */
