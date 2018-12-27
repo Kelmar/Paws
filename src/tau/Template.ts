@@ -41,7 +41,7 @@ export class Template implements ITemplate
             this.options.template;
 
         this.m_log.debug('template: ' + template);
-        
+
         if (template != null)
         {
             this.m_log.debug('Runing DOMParser on template....')
@@ -54,6 +54,7 @@ export class Template implements ITemplate
             catch (e)
             {
                 this.m_log.error(e);
+                this.m_node = this.templateError(e);
             }
 
             this.m_log.info("Loaded:", this.m_node);
@@ -62,6 +63,23 @@ export class Template implements ITemplate
         {
             throw new Error("No selector or template specified in options.");
         }
+    }
+
+    private templateError(e: Error): HTMLElement
+    {
+        let pre = document.createElement("pre");
+        pre.innerText = e.toString();
+
+        let header = document.createElement("h4");
+        header.innerText = "Template Error";
+
+        let rval = document.createElement("div");
+        rval.appendChild(header);
+        rval.appendChild(pre);
+
+        rval.className = "template-error";
+
+        return rval;
     }
 
     private parseBindings(): void

@@ -5,14 +5,10 @@ import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } 
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { ITransportListener, ITransportConnection, ConnectionState, Transport } from "./Transport";
+import { ITransportListener, ITransportConnection, ConnectionState, IListener, IClient } from "./Transport";
 import { LogManager, ILogger } from '../common/logging';
 
-import { IDisposable } from '../lepton';
-
-/* ================================================================================================================= */
-
-const IPC_ID_SYMBOL = Symbol('__IPC_ID');
+import { IContainer, IDisposable, Lifetime } from '../lepton';
 
 /* ================================================================================================================= */
 
@@ -65,9 +61,9 @@ export class IpcConnection implements ITransportConnection, IDisposable
 
     private m_state: ConnectionState = ConnectionState.Unbound;
 
-    constructor(base: ConnectionBase, id?: number)
+    constructor(base?: ConnectionBase, id?: number)
     {
-        this.m_base = base;
+        this.m_base = base || new ConnectionBase(ipcRenderer, ipcRenderer);
 
         if (id != null)
         {
@@ -206,17 +202,15 @@ export class IpcListener implements ITransportListener, IDisposable
 
 export module IPC
 {
-    export function init()
+    export function configure(container: IContainer)
     {
-        Transport.registerTransportFactories({
-            name: "IPC",
-            listener: () => new IpcListener(),
-            client: () =>
-            {
-                let base = new ConnectionBase(ipcRenderer, ipcRenderer);
-                return new IpcConnection(base);
-            }
-        });
+        container.register(IListener)
+            .to(IpcListener)
+            .with(Lifetime.Singleton);
+
+        container.register(IClient)
+            .to(IpcConnection)
+            .with(Lifetime.Scoped);
     }
 }
 

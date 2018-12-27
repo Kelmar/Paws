@@ -3,8 +3,20 @@ import Server from './backend/Server';
 
 // Force initialization of IPC transport layer.
 import { IPC } from './backend/IpcTransport';
+import { Container } from './lepton/container';
+import { using } from './lepton';
 
-IPC.init();
+let container = new Container();
 
-var server: Server = new Server();
-var app: Application = new Application();
+IPC.configure(container);
+
+using (container.beginScope(), scope =>
+{
+    var server: Server = new Server();
+    scope.buildUp(server);
+
+    server.start();
+
+    var app: Application = new Application();
+});
+

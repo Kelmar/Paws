@@ -38,7 +38,14 @@ export default class Application implements IDisposable
         if (this.window != null)
             return;
             
-        this.window = new BrowserWindow({ width: 800, height: 600, show: false });
+        this.window = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            webPreferences: {
+                nodeIntegration: true
+            }
+        });
 
         this.window.loadFile(`${__dirname}/index.html`);
 

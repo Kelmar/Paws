@@ -2,10 +2,10 @@
 
 import { Subscription } from 'rxjs';
 
-import { Transport, ITransportListener, ITransportConnection } from './Transport';
+import { ITransportListener, ITransportConnection, IListener } from './Transport';
 import { ILogger, LogManager } from '../common/logging';
 
-import { IDisposable } from '../lepton';
+import { IDisposable, inject } from '../lepton';
 
 /* ================================================================================================================= */
 
@@ -13,27 +13,28 @@ export default class Server implements IDisposable
 {
     private readonly m_log: ILogger = LogManager.getLogger('paws.backend.server');
 
-    private readonly m_listener: ITransportListener
-    private readonly m_connSubscribe: Subscription;
+    @inject(IListener)
+    private readonly listener: ITransportListener
+
+    private m_connSubscribe: Subscription;
 
     constructor()
     {
-        this.m_log.info("Server is starting...");
-
-        this.m_listener = Transport.listenerFactory();
-
-        this.m_connSubscribe = this.m_listener
-            .listen()
-            .subscribe(client => this.connect(client));
     }
 
     public dispose()
     {
         if (this.m_connSubscribe)
             this.m_connSubscribe.unsubscribe();
+    }
 
-        if (this.m_listener != null)
-            this.m_listener.dispose();
+    public start(): void
+    {
+        this.m_log.info("Server is starting...");
+
+        this.m_connSubscribe = this.listener
+            .listen()
+            .subscribe(client => this.connect(client));
     }
 
     private connect(client: ITransportConnection): void

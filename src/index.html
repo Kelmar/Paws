@@ -2,14 +2,9 @@
 
 <html>
     <head>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'">
         <meta charset="UTF-8" />
         <title>Paws</title>
-        <style>
-.red
-{
-    color: red;
-}
-        </style>
     </head>
 
     <body>
@@ -23,10 +18,10 @@
     </body>
 
     <script type="text/javascript">
-        const { IPC } = require('./backend/IpcTransport');
-        const { Transport } = require('./backend/Transport');
+        //const { IPC } = require('./backend/IpcTransport');
+        //const { Transport } = require('./backend/Transport');
 
-        IPC.init();
+        //IPC.init();
 
         const { Template } = require('./tau/Template');
         const Component = require('./tau/Component');
