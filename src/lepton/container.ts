@@ -3,24 +3,16 @@
 
 import "reflect-metadata";
 
-import { INJECTION_METADATA } from "./consts";
-import { InjectionMetadata } from "./decorators";
-import { Type, IRegistrationSyntax, IContainer } from "./interfaces";
+import { Type, IRegistrationSyntax, IContainer, IScope } from "./interfaces";
+
+import { Scope } from './scope';
+import { Lifetime } from "./lifecycle";
+
+import RegistrationInfo from './RegistrationInfo';
 
 /* ================================================================================================================= */
 
-class ReflectionInfo
-{
-    public type: Function;
-
-    protected constructor (readonly target: symbol)
-    {
-    }
-}
-
-/* ================================================================================================================= */
-
-export class RegistrationSyntax extends ReflectionInfo implements IRegistrationSyntax
+class RegistrationSyntax extends RegistrationInfo implements IRegistrationSyntax
 {
     constructor(readonly target: symbol)
     {
@@ -32,29 +24,46 @@ export class RegistrationSyntax extends ReflectionInfo implements IRegistrationS
         this.type = type;
         return this;
     }
+
+    with(lifetime: Lifetime): IRegistrationSyntax
+    {
+        this.lifetime = lifetime;
+        return this;
+    }
 }
 
 /* ================================================================================================================= */
 
 export class Container implements IContainer
 {
-    private m_maps: Map<symbol, ReflectionInfo>;
+    private m_maps: Map<symbol, RegistrationInfo>;
+    private m_singletonScope: Scope;
 
     constructor()
     {
-        this.m_maps = new Map<symbol, ReflectionInfo>();
+        this.m_maps = new Map<symbol, RegistrationInfo>();
+        this.m_singletonScope = new Scope(this, Lifetime.Singleton);
     }
 
-    public dispose()
+    public dispose(): void
     {
-        this.m_maps = new Map<symbol, ReflectionInfo>();
+        this.m_singletonScope.dispose();
+        this.m_maps = null;
+    }
+
+    private disposeItem(item: any): void
+    {
+        let disposal: Function = item["dispose"];
+
+        if (typeof disposal === "function")
+            disposal.apply(item);
     }
     
-    public register<T>(name: symbol): IRegistrationSyntax
+    public register(name: symbol): IRegistrationSyntax
     {
-        let lookup: ReflectionInfo = this.m_maps.get(name);
+        let reg: RegistrationInfo = this.getRegistration(name);
 
-        if (lookup != null)
+        if (reg != null)
         {
             let nameStr: string = name.toString();
             throw new Error(`'${nameStr}' is an already registered type.`);
@@ -66,48 +75,21 @@ export class Container implements IContainer
         return rval;
     }
 
-    /**
-     * Injects values into an existing object.
-     * 
-     * The object will not be added to the managed container.
-     * 
-     * @param target The object to have its properties injected.
-     */
-    public buildUp<T>(target: T): T
+    public isRegistered(name: symbol): boolean
     {
-        let prototype = Object.getPrototypeOf(target);
-        let propMetadata: InjectionMetadata = Reflect.getMetadata(INJECTION_METADATA, prototype);
-
-        if (propMetadata != null)
-        {
-            propMetadata.properties.forEach((typeName, index) => 
-            {
-                (target as any)[index] = this.resolve(this.m_maps.get(typeName).type as any);
-            });
-        }
-
-        return target;
+        return this.m_maps.has(name);
     }
 
-    /**
-     * Builds a new object of type target.
-     * 
-     * @param type The type to build.
-     */
-    public resolve<T>(type: Type<T>): T
+    public beginScope(): IScope
     {
-        let params = Reflect.getOwnMetadata("design:paramtypes", type) || [];
+        return new Scope(this, Lifetime.Scoped, this.m_singletonScope);
+    }
 
-        let ctorMetadata: InjectionMetadata = Reflect.getOwnMetadata(INJECTION_METADATA, type);
+    // TODO: Hide the items below, they are internal to Lepton
 
-        if (ctorMetadata != null)
-            ctorMetadata.parameters.forEach((typeName, index) => params[index] = this.m_maps.get(typeName).type);
-
-        let args = params.map((p: any) => this.resolve(p));
-
-        let rval: T = new type(...args);
-
-        return this.buildUp(rval);
+    public getRegistration(name: symbol): RegistrationInfo
+    {
+        return this.m_maps.get(name);
     }
 }
 

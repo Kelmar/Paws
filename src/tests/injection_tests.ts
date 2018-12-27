@@ -4,13 +4,14 @@
 const assert = require('assert');
 
 import { testFixture, test, testCase, runAllTests } from './decorators';
-import { inject } from '../lepton';
+import { inject, using, Lifetime } from '../lepton';
 import { Container } from '../lepton/container';
 import { isTypeOf } from './utils';
 
 /* ================================================================================================================= */
 
-const IBar: unique symbol = Symbol("IBar");
+const IBar: unique symbol = Symbol("inject:IBar");
+const IFoo: unique symbol = Symbol("inject:IFoo");
 
 class Bar
 {
@@ -33,11 +34,16 @@ export class InjectTests
 
         let c = new Container();
         c.register(IBar).to(Bar);
+        c.register(IFoo).to(Foo);
 
-        let f = c.resolve(Foo);
+        using(c.beginScope(), scope =>
+        {
+            let f: Foo = scope.resolve(IFoo);
 
-        assert.ok(f.bar);
-        assert.ok(isTypeOf(f.bar, Bar));
+            assert.ok(f);
+            assert.ok(f.bar);
+            assert.ok(isTypeOf(f.bar, Bar));
+        });
     }
 
     @test
@@ -50,6 +56,7 @@ export class InjectTests
 
             public test()
             {
+                
                 assert.ok(this.bar);
                 assert.ok(isTypeOf(this.bar, Bar));
             }
@@ -57,9 +64,14 @@ export class InjectTests
 
         let c = new Container();
         c.register(IBar).to(Bar);
+        c.register(IFoo).to(Foo);
 
-        let f = c.resolve(Foo);
-        f.test();
+        using(c.beginScope(), scope =>
+        {
+            let f: Foo = scope.resolve(IFoo);
+            assert.ok(f);
+            f.test();
+        });
     }
 }
 
