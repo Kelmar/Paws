@@ -2,7 +2,7 @@
 
 import { Subscription } from 'rxjs';
 
-import { IClient, IListener } from './Transport';
+import { IClient, IListener } from './transport';
 import { ILogger, LogManager } from '../common/logging';
 
 import { IDisposable, inject } from '../lepton';

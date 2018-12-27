@@ -3,7 +3,8 @@
 
 import { Observable } from 'rxjs';
 
-import { IDisposable } from "../lepton";
+import { IDisposable, IContainer } from "../../lepton";
+import { IPC } from './ipc';
 
 /* ================================================================================================================= */
 
@@ -44,6 +45,17 @@ export interface IClient extends IDisposable
     recv(): Observable<any>;
 
     disconnect(): void;
+}
+
+/* ================================================================================================================= */
+
+export module transport
+{
+    export function configure(container: IContainer)
+    {
+        if (Electron.ipcMain != null)
+            IPC.configure(container);
+    }
 }
 
 /* ================================================================================================================= */

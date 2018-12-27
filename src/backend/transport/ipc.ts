@@ -5,10 +5,10 @@ import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } 
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { ConnectionState, IListener, IClient } from "./Transport";
-import { LogManager, ILogger } from '../common/logging';
+import { ConnectionState, IListener, IClient } from ".";
+import { LogManager, ILogger } from '../../common/logging';
 
-import { IContainer, IDisposable, Lifetime } from '../lepton';
+import { IContainer, IDisposable, Lifetime } from '../../lepton';
 
 /* ================================================================================================================= */
 
