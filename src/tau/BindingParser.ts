@@ -4,7 +4,7 @@ import { IBindingTarget, IDataBinding } from "./interfaces";
 import { parseDataBinding } from "./DataBinding";
 import { ILogger, LogManager } from "../common/logging";
 
-import { AttributeBindingTarget, ClassBindingTarget, HtmlBindingTarget, TextBindingTarget } from "./attributes";
+import { AttributeBindingTarget, ClassBindingTarget, EventBindingTarget, HtmlBindingTarget, TextBindingTarget } from "./attributes";
 
 /* ================================================================================================================= */
 
@@ -13,9 +13,9 @@ const ATTR_PREFIX: string = NAMESPACE + '-';
 
 /* ================================================================================================================= */
 
-interface BindingFactory
+interface BindingType
 {
-    (item: Element, name: string, dataBinding: IDataBinding): IBindingTarget
+    new (item: Element, name: string, dataBinding: IDataBinding): IBindingTarget
 }
 
 /* ================================================================================================================= */
@@ -24,12 +24,17 @@ class AttributeBindingMap
 {
     public pattern: RegExp;
 
-    constructor(pattern: string | RegExp, readonly factory: BindingFactory)
+    constructor(pattern: string | RegExp, readonly binding: BindingType)
     {
         if (pattern instanceof RegExp)
             this.pattern = pattern;
         else
             this.pattern = new RegExp('^' + pattern + '$', "i");
+    }
+
+    public build(item: Element, name: string, dataBinding: IDataBinding): IBindingTarget
+    {
+        return new (this.binding)(item, name, dataBinding);
     }
 }
 
@@ -48,12 +53,12 @@ export class BindingParser
         this.addAttributeBindingTarget("text", TextBindingTarget);
         this.addAttributeBindingTarget("html", HtmlBindingTarget);
         this.addAttributeBindingTarget(/^class(?:|\-[\-_\w]+)$/i, ClassBindingTarget);
+        this.addAttributeBindingTarget(/^(on[\w]+)$/i, EventBindingTarget);
     }
 
-    public addAttributeBindingTarget<T extends IBindingTarget>(pattern: string | RegExp, ctor: new (item: Element, name: string, dataBinding: IDataBinding) => T): void
+    public addAttributeBindingTarget(pattern: string | RegExp, ctor: BindingType): void
     {
-        let factory = (e: Element, n: string, d: IDataBinding) => new ctor(e, n, d);
-        this.m_attributeBindings.push(new AttributeBindingMap(pattern, factory));
+        this.m_attributeBindings.push(new AttributeBindingMap(pattern, ctor));
     }
 
     private bindAttribute(item: Element, name: string, value: string): IBindingTarget
@@ -72,7 +77,7 @@ export class BindingParser
         let dataBinding: IDataBinding = parseDataBinding(value);
 
         let mapping: AttributeBindingMap = this.m_attributeBindings.find(x => x.pattern.test(name));
-        return mapping == null ? new AttributeBindingTarget(item, name, dataBinding) : mapping.factory(item, name, dataBinding);
+        return mapping == null ? new AttributeBindingTarget(item, name, dataBinding) : mapping.build(item, name, dataBinding);
     }
 
     private parseElement(item: Element): IBindingTarget[]

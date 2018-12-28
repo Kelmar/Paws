@@ -3,6 +3,7 @@
 
 export * from './AttributeBinding';
 export * from './ClassBinding';
+export * from './EventBinding';
 export * from './HtmlBinding';
 export * from './TextBinding';
 

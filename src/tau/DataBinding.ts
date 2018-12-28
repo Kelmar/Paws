@@ -63,9 +63,6 @@ export class PathDataBinding implements IDataBinding
             }
         }
 
-        if (res instanceof Function)
-            return [true, res()]; // TODO: This probably should be moved.
-
         return [true, res];
     }
 }
