@@ -1,112 +1,133 @@
-
-interface getter
+export interface NotifyCallback<T extends object>
 {
-    (): any
+    (target: T, p: PropertyKey | String, value?: any): void;
 }
 
-interface setter
+class ObservableHandler<T extends object> implements ProxyHandler<T>
 {
-    (value: any): void
-}
+    private m_subscriptions: Set<NotifyCallback<T>> = new Set();
 
-class DynamicProperty
-{
-    private readonly m_get: getter;
-    private readonly m_set: setter;
-
-    private m_value: any;
-
-    constructor(readonly item: any, readonly name: string, info: PropertyDescriptor)
+    public get(target: T, p: PropertyKey, {}): any
     {
-        if (info.value !== undefined)
-            this.m_value = info.value;
-
-        this.m_get = info.get;
-        this.m_set = info.set;
-
-        Object.defineProperty(this.item, name,
+        switch (p)
         {
-            set: v => this.set(v),
-            get: () => this.get()
+        case "unsubscribe":
+            return (cb: NotifyCallback<T>) => this.unsubscribe(target, cb);
+
+        case "subscribe":
+            return (cb: NotifyCallback<T>) => this.subscribe(target, cb);
+
+        case "notify":
+            return (p2: PropertyKey | string, value?: any) => this.notify(target, p2, value);
+
+        default:
+            return (target as any)[p];
+        }
+        
+    }
+
+    public set(target: T, p: PropertyKey, value: any, {}): boolean
+    {
+        switch (p)
+        {
+        case "unsubscribe":
+        case "subscribe":
+        case "notify":
+            // TODO: Log this so a developer knows what happened.
+            return false; // Don't allow these to be set.
+
+        default:
+            let a: any = target;
+            let oldVal: any = a[p];
+
+            if (oldVal !== value)
+            {
+                // TODO: Adjust child observables.  (And notify child callbacks)
+                a[p] = value;
+                this.notify(target, p, value);
+            }
+
+            return true;
+        }
+    }
+
+    public deleteProperty(target: T, p: PropertyKey): boolean
+    {
+        let a: any = target;
+
+        if (a[p] !== undefined)
+        {
+            // TODO: Adjust child observables.  (And notify child callbacks)
+            a[p] = undefined;
+            delete a[p];
+            this.notify(target, p);
+        }
+
+        return true;
+    }
+
+    public subscribe(target: T, cb: NotifyCallback<T>): void
+    {
+        this.m_subscriptions.add(cb);
+    }
+
+    public unsubscribe(target: T, cb: NotifyCallback<T>): void
+    {
+        this.m_subscriptions.delete(cb);
+    }
+
+    public notify(target: T, p: PropertyKey | string, value?: any): void
+    {
+        this.m_subscriptions.forEach(cb =>
+        {
+            try
+            {
+                cb(target, p, value);
+            }
+            catch (e)
+            {
+                // TODO: Log this for a developer.
+            }
         });
     }
+}
 
-    public get(): any
-    {
-        let rval = this.peek();
+/*
+ * Personal note: does it make sense to allow a callback to be subscribed to a specific property?
+ * Currently I'm leaning towards that it might, but will have to see depending on how the UI portion
+ * of the Tau library unfolds.
+ */
 
-        // TODO: Update dependencies.
-
-        return rval;
-    }
-
-    public set(value: any)
-    {
-        let oldValue = this.peek();
-
-        if (value === oldValue)
-            return;
-
-        if (this.m_set != null)
-            this.m_set.call(this.item, value);
-        else
-            this.m_value = value;
-
-        // TODO: Notify observers
-    }
+export interface Observable<T extends object>
+{
+    /**
+     * Adds a callback to the subscriber list.
+     *
+     * @param cb The callback to add.
+     */
+    subscribe(cb: NotifyCallback<T>): void;
 
     /**
-     * Gets an observed property's value without subscribing to it.
+     * Removes a callback from the subscriber list.
+     *
+     * @param cb The callback to remove.
      */
-    public peek(): any
-    {
-        return this.m_get != null ? this.m_get.call(this.item) : this.m_value;
-    }
+    unsubscribe(cb: NotifyCallback<T>): void;
+
+    /**
+     * Sends a notification event to the callbacks that the given property has been updated.
+     *
+     * This can be useful when a property is a computed value based on other values that have been set.
+     *
+     * @param p The property to send the notification for.
+     * @param value The new value for the property.
+     */
+    notify(p: PropertyKey | string, value?: any): void;
 }
 
-const OBSERVABLE_SELF: unique symbol = Symbol('tau:models:observable');
-
-class Observable<T>
+export function makeObservable<T extends object>(item: T): T & Observable<T>
 {
-    private readonly m_item: T;
+    let p = new Proxy(item, new ObservableHandler<T>());
 
-    private readonly m_properties: DynamicProperty[];
-
-    public constructor (item: T)
-    {
-        if (item == null)
-            return;
-
-        let self = Observable.getSelf(item);
-
-        if (self !== null)
-            return self; // Don't redefine the observable object.
-
-        this.m_item = item;
-        this.m_properties = [];
-
-        Object.defineProperty(item, OBSERVABLE_SELF, {
-            configurable: false,
-            writable: false,
-            value: this,
-            enumerable: false
-        });
-
-        this.makeObservable();
-    }
-
-    private static getSelf<T>(item: T): Observable<T>
-    {
-        return (item as any)[OBSERVABLE_SELF];
-    }
-
-    private makeObservable()
-    {
-        let properties = Object.keys(this.m_item)
-            .map(name => ({ name: name, info: Object.getOwnPropertyDescriptor(this.m_item, name)}))
-            .filter(x => x.info != null && x.info.configurable);
-
-        for (let prop of properties)
-            this.m_properties.push(new DynamicProperty(this.m_item, prop.name, prop.info));
-    }
+    return (p as any as (T & Observable<T>));
 }
