@@ -1,21 +1,32 @@
-export interface NotifyCallback<T extends object>
+/* ================================================================================================================= */
+/* ================================================================================================================= */
+
+import { LogManager } from "../../common/logging";
+import { IDisposable } from "../../lepton";
+
+/* ================================================================================================================= */
+
+export interface NotifyCallback
 {
-    (target: T, p: PropertyKey | String, value?: any): void;
+    (target: any, p: PropertyKey | string, value?: any): void;
 }
+
+/* ================================================================================================================= */
+
+let g_log = LogManager.getLogger("paws.tau.observable");
+
+/* ================================================================================================================= */
 
 class ObservableHandler<T extends object> implements ProxyHandler<T>
 {
-    private m_subscriptions: Set<NotifyCallback<T>> = new Set();
+    private m_subscriptions: Set<NotifyCallback> = new Set();
 
     public get(target: T, p: PropertyKey, {}): any
     {
         switch (p)
         {
-        case "unsubscribe":
-            return (cb: NotifyCallback<T>) => this.unsubscribe(target, cb);
-
         case "subscribe":
-            return (cb: NotifyCallback<T>) => this.subscribe(target, cb);
+            return (cb: NotifyCallback) => this.subscribe(target, cb);
 
         case "notify":
             return (p2: PropertyKey | string, value?: any) => this.notify(target, p2, value);
@@ -30,10 +41,9 @@ class ObservableHandler<T extends object> implements ProxyHandler<T>
     {
         switch (p)
         {
-        case "unsubscribe":
         case "subscribe":
         case "notify":
-            // TODO: Log this so a developer knows what happened.
+            g_log.error("Attempt to set property {name} denied.", { name: p });
             return false; // Don't allow these to be set.
 
         default:
@@ -66,14 +76,17 @@ class ObservableHandler<T extends object> implements ProxyHandler<T>
         return true;
     }
 
-    public subscribe(target: T, cb: NotifyCallback<T>): void
+    public subscribe(target: T, cb: NotifyCallback): IDisposable
     {
         this.m_subscriptions.add(cb);
-    }
 
-    public unsubscribe(target: T, cb: NotifyCallback<T>): void
-    {
-        this.m_subscriptions.delete(cb);
+        return {
+            dispose: function()
+            {
+                this.m_subscriptions.remove(cb);
+                cb = null;
+            }
+        }
     }
 
     public notify(target: T, p: PropertyKey | string, value?: any): void
@@ -86,11 +99,13 @@ class ObservableHandler<T extends object> implements ProxyHandler<T>
             }
             catch (e)
             {
-                // TODO: Log this for a developer.
+                g_log.error("Error durring callback on property {name} change: {exception}", { name: p, exception: e });
             }
         });
     }
 }
+
+/* ================================================================================================================= */
 
 /*
  * Personal note: does it make sense to allow a callback to be subscribed to a specific property?
@@ -98,21 +113,16 @@ class ObservableHandler<T extends object> implements ProxyHandler<T>
  * of the Tau library unfolds.
  */
 
-export interface Observable<T extends object>
+ /* ================================================================================================================= */
+
+export interface Observable
 {
     /**
      * Adds a callback to the subscriber list.
      *
      * @param cb The callback to add.
      */
-    subscribe(cb: NotifyCallback<T>): void;
-
-    /**
-     * Removes a callback from the subscriber list.
-     *
-     * @param cb The callback to remove.
-     */
-    unsubscribe(cb: NotifyCallback<T>): void;
+    subscribe(cb: NotifyCallback): IDisposable;
 
     /**
      * Sends a notification event to the callbacks that the given property has been updated.
@@ -125,9 +135,14 @@ export interface Observable<T extends object>
     notify(p: PropertyKey | string, value?: any): void;
 }
 
-export function makeObservable<T extends object>(item: T): T & Observable<T>
+/* ================================================================================================================= */
+
+export function makeObservable<T extends object>(item: T): T & Observable
 {
     let p = new Proxy(item, new ObservableHandler<T>());
 
-    return (p as any as (T & Observable<T>));
+    return (p as any as (T & Observable));
 }
+
+/* ================================================================================================================= */
+ 
