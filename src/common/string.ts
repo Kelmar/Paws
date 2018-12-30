@@ -56,7 +56,7 @@ function parseFormat(format: string): [string, number, string[]]
 
 function formatPegasus<T>(properties: T): string
 {
-    return this.replace(/{(.*?)}/g, (_: string, match: string) =>
+    return this.replace(/{(.*?)}/g, ({}, match: string) =>
     {
         let [name, padding, options] = parseFormat(match);
         let value: any = (properties as any)[name];

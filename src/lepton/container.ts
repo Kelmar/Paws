@@ -51,14 +51,6 @@ export class Container implements IContainer
         this.m_maps = null;
     }
 
-    private disposeItem(item: any): void
-    {
-        let disposal: Function = item["dispose"];
-
-        if (typeof disposal === "function")
-            disposal.apply(item);
-    }
-    
     public register(name: symbol): IRegistrationSyntax
     {
         let reg: RegistrationInfo = this.getRegistration(name);

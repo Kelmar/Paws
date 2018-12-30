@@ -77,8 +77,7 @@ export class Scope implements IScope
         if (rval === null && this.parent !== null)
             rval = this.parent.tryResolve<T>(name);
 
-        if (rval !== null)
-            return rval;
+        return rval;
     }
 
     public buildUp<T>(target: T): T
@@ -112,20 +111,23 @@ export class Scope implements IScope
 
     public resolve<T>(name: symbol): T
     {
-        let regInfo: RegistrationInfo = this.container.getRegistration(name);
-
-        if (regInfo == null)
-        {
-            let symStr = name.toString();
-            throw new Error(`Symbol '${symStr}' not registered.`);
-        }
-
         let rval: T = this.tryResolve(name);
 
-        rval = this.createNew(regInfo);
+        if (rval == null)
+        {
+            let regInfo: RegistrationInfo = this.container.getRegistration(name);
 
-        this.buildUp<T>(rval);
-        this.manage(regInfo, rval);
+            if (regInfo == null)
+            {
+                let symStr = name.toString();
+                throw new Error(`Symbol '${symStr}' not registered.`);
+            }
+
+            rval = this.createNew(regInfo);
+
+            this.buildUp<T>(rval);
+            this.manage(regInfo, rval);
+        }
         
         return rval;
     }

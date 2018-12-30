@@ -1,14 +1,11 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } from 'electron';
-import { fromEvent, Observable, Subject, never } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, never } from 'rxjs';
 
 import { ConnectionState, IListener, IClient } from ".";
-import { LogManager, ILogger } from '../../common/logging';
 
-import { IContainer, IDisposable, Lifetime } from '../../lepton';
+import { IContainer } from '../../lepton';
 
 /* ================================================================================================================= */
 
