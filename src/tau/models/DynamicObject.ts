@@ -139,11 +139,13 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
 
     public notify(): void
     {
+        let m: Map<string, string> = new Map();
+
         this.m_subject.next(new ModelEvent(ModelEventType.Ping));
     }
 }
 
- /* ================================================================================================================= */
+/* ================================================================================================================= */
 
 export interface Dynamic
 {
@@ -156,6 +158,11 @@ export interface Dynamic
      * Sends a ping notification event, useful for forcing updates on computed properties.
      */
     notify(): void;
+
+    /**
+     * Reads a property from the model.
+     */
+    [name: string]: any;
 }
 
 /* ================================================================================================================= */
