@@ -46,6 +46,7 @@ export class IfNode extends VirtualNode
 
         rval = new IfNode(element);
         rval.m_branches.push(ifCondition);
+        rval.addBinding(ifCondition.condition);
 
         return rval;
     }
@@ -112,6 +113,9 @@ export class IfNode extends VirtualNode
         elseNode.forEach(c => rval.children.push(c));
 
         this.moveChildren(elseNode);
+
+        if (elseNode.condition != '')
+            this.addBinding(elseNode.condition);
     }
 
     private getMatchingCondition(): BranchCondition

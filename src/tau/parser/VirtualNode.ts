@@ -79,11 +79,15 @@ export class VirtualNode implements IDisposable
     // Creates a deep copy of this node
     public clone(): VirtualNode
     {
-        // BUG: Not creating the right kind of VirtualNode here.
-        let rval = new VirtualNode(this.element != null ? this.element.cloneNode(false) : null);
+        let cloneEl = this.element != null ? this.element.cloneNode(false) : null;
+        let rval = new VirtualNode(cloneEl);
 
         this.forEach(c => {
-            rval.addChild(c.clone());
+            let childClone = c.clone();
+            rval.addChild(childClone);
+
+            if (childClone.element != null && cloneEl != null)
+                cloneEl.appendChild(childClone.element);
         });
 
         return rval;
@@ -92,6 +96,13 @@ export class VirtualNode implements IDisposable
     protected addBinding(binding: string): void
     {
         this.m_boundProperties.add(binding);
+    }
+
+    protected isBoundTo(binding: PropertyKey): boolean
+    {
+        return this.m_boundProperties.size == 0 ||
+            this.m_boundProperties.has(binding) ||
+            this.m_children.some(x => x.isBoundTo(binding));
     }
 
     public addChild(child: VirtualNode): void
@@ -151,6 +162,16 @@ export class VirtualNode implements IDisposable
         }
     }
 
+    private sendChildUpdates(event: ModelEvent)
+    {
+        let childUpdates = this.m_children;
+
+        if (event != null && event.property != null)
+            childUpdates = childUpdates.filter(x => x.isBoundTo(event.property));
+
+        childUpdates.forEach(c => c.updateChild(event));
+    }
+
     /**
      * Called when the parent's model has changed and this model is bound to the change.
      */
@@ -167,16 +188,16 @@ export class VirtualNode implements IDisposable
         // Stub function
     }
 
+    private updateChild(event: ModelEvent): void
+    {
+        this.parentModelUpdated(event);
+        this.sendChildUpdates(event);
+    }
+
     private update(event: ModelEvent): void
     {
         this.modelUpdated(event);
-
-        let childUpdates = this.m_children.filter(x => x.element && x.element.isConnected);
-
-        if (event != null && event.property != null)
-            childUpdates = childUpdates.filter(x => x.m_boundProperties.size == 0 || x.m_boundProperties.has(event.property));
-
-        childUpdates.forEach(c => c.parentModelUpdated(event));
+        this.sendChildUpdates(event);
     }
 }
 
