@@ -46,7 +46,7 @@ export class IfNode extends VirtualNode
 
         rval = new IfNode(element);
         rval.m_branches.push(ifCondition);
-        rval.addBinding(ifCondition.condition);
+        rval.addBinding(ifCondition.condition, () => rval.updateBranches());
 
         return rval;
     }
@@ -115,7 +115,7 @@ export class IfNode extends VirtualNode
         this.moveChildren(elseNode);
 
         if (elseNode.condition != '')
-            this.addBinding(elseNode.condition);
+            this.addBinding(elseNode.condition, () => this.updateBranches());
     }
 
     private getMatchingCondition(): BranchCondition
@@ -134,7 +134,7 @@ export class IfNode extends VirtualNode
         return null;
     }
 
-    protected parentModelUpdated(event: ModelEvent): void
+    protected updateBranches(): void
     {
         let condition = this.getMatchingCondition();
 

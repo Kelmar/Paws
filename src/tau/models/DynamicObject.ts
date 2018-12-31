@@ -143,14 +143,6 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
     }
 }
 
-/* ================================================================================================================= */
-
-/*
- * Personal note: does it make sense to allow a callback to be subscribed to a specific property?
- * Currently I'm leaning towards that it might, but will have to see depending on how the UI portion
- * of the Tau library unfolds.
- */
-    
  /* ================================================================================================================= */
 
 export interface Dynamic

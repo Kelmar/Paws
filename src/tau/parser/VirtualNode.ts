@@ -2,12 +2,86 @@
 /* ================================================================================================================= */
 
 import { Dynamic, ModelEvent } from '../models';
-import { IDisposable } from '../../lepton';
+import { IDisposable, LinkedList } from '../../lepton';
 import { Subscription } from 'rxjs';
 
 /* ================================================================================================================= */
 
 export type NodeCollection = VirtualNode[] | IterableIterator<VirtualNode>;
+
+/* ================================================================================================================= */
+
+export interface BindingUpdater
+{
+    (name: PropertyKey): void;
+}
+
+/* ================================================================================================================= */
+
+class Dispatcher
+{
+    private readonly m_sets: Map<PropertyKey, Set<BindingUpdater>> = new Map();
+
+    private getSet(name: PropertyKey, create: boolean): Set<BindingUpdater>
+    {
+        let rval = this.m_sets.get(name);
+
+        if (rval == null && create)
+        {
+            rval = new Set<BindingUpdater>();
+            this.m_sets.set(name, rval);
+        }
+
+        return rval;
+    }
+
+    public clear(): void
+    {
+        for (let [{}, set] of this.m_sets)
+            set.clear();
+
+        this.m_sets.clear();
+    }
+
+    public add(name: PropertyKey, callback: BindingUpdater): void
+    {
+        let set = this.getSet(name, true);
+        set.add(callback);
+    }
+
+    public erase(name: PropertyKey, callback: BindingUpdater): void
+    {
+        let set = this.getSet(name, false);
+
+        if (set)
+        {
+            set.delete(callback);
+
+            if (set.size == 0)
+                this.m_sets.delete(name);
+        }
+    }
+
+    public emit(name: PropertyKey): void
+    {
+        let set = this.getSet(name, false);
+
+        if (set)
+        {
+            for (let cb of set)
+                cb(name);
+        }
+    }
+
+    public broadcast(): void
+    {
+        for (let [name, set] of this.m_sets)
+        {
+            for (let cb of set)
+                cb(name);
+        }
+    }
+}
 
 /* ================================================================================================================= */
 
@@ -20,7 +94,7 @@ export class VirtualNode implements IDisposable
 
     private readonly m_children: VirtualNode[] = [];
 
-    private readonly m_boundProperties: Set<PropertyKey> = new Set();
+    private readonly m_boundProperties: Dispatcher = new Dispatcher();
 
     private m_parent: VirtualNode = null;
     private m_subscription: Subscription;
@@ -46,7 +120,7 @@ export class VirtualNode implements IDisposable
 
     public get model(): Dynamic
     {
-        if (this.m_model != null)
+        if (this.ownModel)
             return this.m_model;
 
         if (this.parent != null)
@@ -58,17 +132,18 @@ export class VirtualNode implements IDisposable
     public set model(newModel: Dynamic)
     {
         if (this.m_subscription)
-        {
             this.m_subscription.unsubscribe();
-            this.m_subscription = null;
-        }
 
         this.m_model = newModel;
 
-        if (this.m_model != null)
-            this.m_subscription = this.m_model.observable.subscribe(e => this.update(e));
+        this.m_subscription = this.ownModel ? this.m_model.observable.subscribe(e => this.update(e)) : null;
 
         this.update(null);
+    }
+
+    public get ownModel(): boolean
+    {
+        return this.m_model != null;
     }
 
     public get parent(): VirtualNode
@@ -93,16 +168,9 @@ export class VirtualNode implements IDisposable
         return rval;
     }
 
-    protected addBinding(binding: string): void
+    public addBinding(binding: string, updater: BindingUpdater): void
     {
-        this.m_boundProperties.add(binding);
-    }
-
-    protected isBoundTo(binding: PropertyKey): boolean
-    {
-        return this.m_boundProperties.size == 0 ||
-            this.m_boundProperties.has(binding) ||
-            this.m_children.some(x => x.isBoundTo(binding));
+        this.m_boundProperties.add(binding, updater);
     }
 
     public addChild(child: VirtualNode): void
@@ -162,42 +230,30 @@ export class VirtualNode implements IDisposable
         }
     }
 
+    protected modelChanged(): void
+    {
+    }
+
     private sendChildUpdates(event: ModelEvent)
     {
-        let childUpdates = this.m_children;
-
-        if (event != null && event.property != null)
-            childUpdates = childUpdates.filter(x => x.isBoundTo(event.property));
-
-        childUpdates.forEach(c => c.updateChild(event));
-    }
-
-    /**
-     * Called when the parent's model has changed and this model is bound to the change.
-     */
-    protected parentModelUpdated(event: ModelEvent): void
-    {
-        // Stub function.
-    }
-
-    /**
-     * Called when the model has changed.
-     */
-    protected modelUpdated(event: ModelEvent): void
-    {
-        // Stub function
+        this.m_children.forEach(c => c.updateChild(event));
     }
 
     private updateChild(event: ModelEvent): void
     {
-        this.parentModelUpdated(event);
+        // See if we're interested in this event or not.
+        if (event == null)
+            this.m_boundProperties.broadcast();
+        else if (event.property)
+            this.m_boundProperties.emit(event.property);
+
         this.sendChildUpdates(event);
     }
 
     private update(event: ModelEvent): void
     {
-        this.modelUpdated(event);
         this.sendChildUpdates(event);
+        this.modelChanged();
     }
 }
 

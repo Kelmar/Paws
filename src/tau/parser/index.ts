@@ -48,9 +48,65 @@ import { ForNode } from "./ForNode";
 
 /* ================================================================================================================= */
 
+class AttributeParseMap
+{
+    public pattern: RegExp;
+
+    constructor(pattern: string | RegExp, readonly binding: Function)
+    {
+        if (pattern instanceof RegExp)
+            this.pattern = pattern;
+        else
+            this.pattern = new RegExp('^' + pattern + '$', "i");
+    }
+}
+
+/* ================================================================================================================= */
+
 export class BindingParser2
 {
     private readonly log = LogManager.getLogger('paws.tau.bindingParser2');
+    private m_attributeParsers: AttributeParseMap[] = [];
+
+    constructor()
+    {
+        this.addAttributeParser(/^html$/, (n: VirtualNode, a: Attr) => this.parseHtmlAttribute(n, a));
+    }
+
+    private addAttributeParser(pattern: string | RegExp, binding: Function): void
+    {
+        this.m_attributeParsers.push(new AttributeParseMap(pattern, binding));
+    }
+
+    private parseAttributes(node: VirtualNode)
+    {
+        if (!(node.element instanceof Element))
+            return;
+
+        for (let attr of node.element.attributes)
+        {
+            let itemName = attr.name.toLowerCase().trim();
+
+            if (!itemName.startsWith('t-'))
+                continue;
+
+            itemName = itemName.substr(2);
+
+            let parser: AttributeParseMap = this.m_attributeParsers.find(x => x.pattern.test(itemName));
+
+            if (parser != null)
+                parser.binding(node, attr);
+        }
+    }
+
+    private parseHtmlAttribute(node: VirtualNode, attr: Attr)
+    {
+        node.addBinding(attr.value, () => {
+            let el = node.element as Element;
+            let m: any = node.model;
+            el.innerHTML = m[attr.value];
+        });
+    }
 
     public parse(root: Element): VirtualNode
     {
@@ -96,6 +152,7 @@ export class BindingParser2
         // Generic tag
         let rval = new VirtualNode(item);
         rval.addRange(this.parseChildren(item));
+        this.parseAttributes(rval);
         return rval;
     }
 
@@ -114,6 +171,8 @@ export class BindingParser2
                 rval.addChild(c);
         }
 
+        this.parseAttributes(rval);
+
         return rval;
     }
 
@@ -121,12 +180,14 @@ export class BindingParser2
     {
         let rval = new ElseNode(item);
         rval.addRange(this.parseChildren(item));
+        
         return rval;
     }
 
     private parseForTag(item: Element): VirtualNode
     {
         let rval = ForNode.parseElement(item, this.parseChildren(item));
+        this.parseAttributes(rval);
         return rval;
     }
 
@@ -134,6 +195,7 @@ export class BindingParser2
     {
         let rval = new VirtualNode(item);
         rval.addRange(this.parseChildren(item))
+        this.parseAttributes(rval);
         return rval;
     }
 

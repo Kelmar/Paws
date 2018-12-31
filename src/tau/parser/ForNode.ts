@@ -16,7 +16,7 @@ export class ForNode extends VirtualNode
     private constructor(element: Element, readonly each: string)
     {
         super(element);
-        this.addBinding(each);
+        this.addBinding(each, () => this.modelUpdated());
     }
 
     public static parseElement(element: Element, children: NodeCollection): ForNode
@@ -94,7 +94,7 @@ export class ForNode extends VirtualNode
         }
     }
 
-    protected parentModelUpdated(event: ModelEvent): void
+    protected modelUpdated(): void
     {
         // The whole list object has been changed.
         this.clearElement();
@@ -106,7 +106,7 @@ export class ForNode extends VirtualNode
         this.renderChildren();
     }
 
-    protected modelUpdated(event: ModelEvent): void
+    protected modelChanged(): void
     {
         this.renderChildren();
     }
