@@ -53,6 +53,10 @@
                     <span t-text="name"></span> is off.
                 </t-if>
             </div>
+            <h4>For tag test</h4>
+            <ul t-for="items">
+                <li>Item: <span t-text="id"></span></li>
+            </ul>
         </div>
     </body>
 
@@ -63,7 +67,7 @@
         //IPC.init();
 
         const { BindingParser2 } = require('./tau/parser');
-        const { makeObservable } = require('./tau/models');
+        const { makeDynamic } = require('./tau/models');
 
         const { Template } = require('./tau/Template');
         const Component = require('./tau/Component');
@@ -75,9 +79,14 @@
         let p = new BindingParser2();
         let el = document.getElementById('test3');
         let vn = p.parse(el);
-        let model = makeObservable({ 
+        let model = makeDynamic({ 
             on: true, 
-            name: 'It'
+            name: 'It',
+            items: [
+                { id: 1, name: "Bugs Bunny" },
+                { id: 2, name: "Daffy Duck" },
+                { id: 3, name: "Elmer Fudd" },
+            ]
         });
     </script>
 </html>

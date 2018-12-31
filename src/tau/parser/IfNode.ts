@@ -2,6 +2,7 @@
 /* ================================================================================================================= */
 
 import { VirtualNode, NodeCollection } from "./VirtualNode";
+import { ModelEvent } from "../models";
 
 /* ================================================================================================================= */
 
@@ -129,7 +130,7 @@ export class IfNode extends VirtualNode
         return null;
     }
 
-    protected modelUpdated(name: PropertyKey | string, value?: any): void
+    protected parentModelUpdated(event: ModelEvent): void
     {
         let condition = this.getMatchingCondition();
 

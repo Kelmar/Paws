@@ -1,8 +1,9 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Observable } from '../models';
+import { Dynamic, ModelEvent } from '../models';
 import { IDisposable } from '../../lepton';
+import { Subscription } from 'rxjs';
 
 /* ================================================================================================================= */
 
@@ -19,9 +20,11 @@ export class VirtualNode implements IDisposable
 
     private readonly m_children: VirtualNode[] = [];
 
+    private readonly m_boundProperties: Set<PropertyKey> = new Set();
+
     private m_parent: VirtualNode = null;
-    private m_subscription: IDisposable;
-    private m_model: Observable;
+    private m_subscription: Subscription;
+    private m_model: Dynamic;
 
     public constructor (element: Node)
     {
@@ -36,12 +39,12 @@ export class VirtualNode implements IDisposable
 
         if (this.m_subscription)
         {
-            this.m_subscription.dispose();
+            this.m_subscription.unsubscribe();
             this.m_subscription = null;
         }
     }
 
-    public get model(): Observable
+    public get model(): Dynamic
     {
         if (this.m_model != null)
             return this.m_model;
@@ -52,18 +55,18 @@ export class VirtualNode implements IDisposable
         return null;
     }
 
-    public set model(newModel: Observable)
+    public set model(newModel: Dynamic)
     {
         if (this.m_subscription)
         {
-            this.m_subscription.dispose();
+            this.m_subscription.unsubscribe();
             this.m_subscription = null;
         }
 
         this.m_model = newModel;
 
         if (this.m_model != null)
-            this.m_subscription = this.m_model.subscribe(({}, name, value) => this.update(name, value));
+            this.m_subscription = this.m_model.observable.subscribe(e => this.update(e));
 
         this.update(null);
     }
@@ -84,6 +87,11 @@ export class VirtualNode implements IDisposable
         });
 
         return rval;
+    }
+
+    protected addBinding(binding: string): void
+    {
+        this.m_boundProperties.add(binding);
     }
 
     public addChild(child: VirtualNode): void
@@ -144,32 +152,31 @@ export class VirtualNode implements IDisposable
     }
 
     /**
-     * Called when the model has changed.
-     *
-     * @param source The VirtualNode that the model was updated for.
-     * @param name The name of the model property that changed.  NULL if the whole model has changed.
-     * @param value The new value.
+     * Called when the parent's model has changed and this model is bound to the change.
      */
-    protected modelUpdated(name: PropertyKey | string, value?: any): void
+    protected parentModelUpdated(event: ModelEvent): void
+    {
+        // Stub function.
+    }
+
+    /**
+     * Called when the model has changed.
+     */
+    protected modelUpdated(event: ModelEvent): void
     {
         // Stub function
     }
 
-    protected update(name: PropertyKey | string, value?: any): void
+    private update(event: ModelEvent): void
     {
-        this.modelUpdated(name, value);
+        this.modelUpdated(event);
 
-        /*
-        let bindingsToApply = (name != null) ? this.m_bindings.filter(x => x.name == name) : this.m_bindings;
+        let childUpdates = this.m_children.filter(x => x.element && x.element.isConnected);
 
-        for (let binding of bindingsToApply)
-            binding.apply(this.element, value);
-        */
+        if (event != null && event.property != null)
+            childUpdates = childUpdates.filter(x => x.m_boundProperties.size == 0 || x.m_boundProperties.has(event.property));
 
-        this.forEach(c => {
-            if (c.element && c.element.isConnected)
-                c.update(name, value)
-        });
+        childUpdates.forEach(c => c.parentModelUpdated(event));
     }
 }
 

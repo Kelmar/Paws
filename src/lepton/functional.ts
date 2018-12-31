@@ -1,13 +1,16 @@
 /* ================================================================================================================= */
-/*
- * Description: Dependency injection framework.
- */
 /* ================================================================================================================= */
 
-export * from "./lifecycle";
-export { inject } from "./decorators";
-export * from "./interfaces";
-export * from "./functional";
-export * from "./LinkedList";
+export interface Predicate<T>
+{
+    (item: T): boolean
+}
+
+/* ================================================================================================================= */
+
+export function toPredicate<T>(item: T | Predicate<T>): Predicate<T>
+{
+    return (typeof item === 'function') ? item as Predicate<T> : (x: T) => x == item;
+}
 
 /* ================================================================================================================= */

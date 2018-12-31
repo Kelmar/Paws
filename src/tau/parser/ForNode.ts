@@ -2,6 +2,7 @@
 /* ================================================================================================================= */
 
 import { VirtualNode, NodeCollection } from "./VirtualNode";
+import { ModelEvent } from "../models";
 
 /* ================================================================================================================= */
 /**
@@ -15,6 +16,7 @@ export class ForNode extends VirtualNode
     private constructor(element: Element, readonly each: string)
     {
         super(element);
+        this.addBinding(each);
     }
 
     public static parseElement(element: Element, children: NodeCollection): ForNode
@@ -76,20 +78,37 @@ export class ForNode extends VirtualNode
         }
     }
 
-    protected modelUpdated(name: PropertyKey | string, value?: any): void
+    private renderChildren()
     {
-        if (name != this.each)
-            return; // List wasn't updated.
-
         // Update on model changed event, or the list itself changed.
         this.clearElement();
 
-        let items = (this.model as any)[this.each];
-
-        for (var $index = 0; $index < items.length; ++$index)
+        if (this.model != null)
         {
-            this.updateItem($index, items[$index], $index == 0, $index == items.length - 1, ($index & 2) == 0, ($index & 2) != 0);
+            let items: any[] = (this.model as any);
+
+            for (var $index = 0; $index < items.length; ++$index)
+            {
+                this.updateItem($index, items[$index], $index == 0, $index == items.length - 1, ($index & 2) == 0, ($index & 2) != 0);
+            }
         }
+    }
+
+    protected parentModelUpdated(event: ModelEvent): void
+    {
+        // The whole list object has been changed.
+        this.clearElement();
+
+        // Rebind
+        let pModel: any = this.parent.model;
+        this.model = pModel[this.each];
+
+        this.renderChildren();
+    }
+
+    protected modelUpdated(event: ModelEvent): void
+    {
+        this.renderChildren();
     }
 }
 
