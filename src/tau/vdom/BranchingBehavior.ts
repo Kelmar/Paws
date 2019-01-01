@@ -8,7 +8,7 @@ import { INodeBehavior, VirtualNode } from "./VirtualNode";
 /**
  * A single branch of our branching behavior with it's condition
  */
-class Branch
+export class Branch
 {
     /**
      * List of children that apply to this branch.

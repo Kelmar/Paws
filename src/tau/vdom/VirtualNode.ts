@@ -66,7 +66,7 @@ export class VirtualNode implements IDisposable
     private m_sub: Subscription = null;
     private m_model: Dynamic = null;
 
-    public constructor()
+    public constructor(readonly container: Element)
     {
     }
 
@@ -108,6 +108,11 @@ export class VirtualNode implements IDisposable
         return this.m_model != null;
     }
 
+    public addBehavior(behavior: INodeBehavior): void
+    {
+        this.m_behaviors.push(behavior);
+    }
+
     public add(node: VirtualNode): void
     {
         if (node != null && node != this)
@@ -128,7 +133,7 @@ export class VirtualNode implements IDisposable
 
     public clone(): VirtualNode
     {
-        let rval = new VirtualNode();
+        let rval = new VirtualNode(this.container.cloneNode(false) as Element);
 
         this.forEach(n => rval.add(n.clone()));
 
