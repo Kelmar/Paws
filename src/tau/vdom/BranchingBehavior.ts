@@ -2,7 +2,8 @@
 /* ================================================================================================================= */
 
 import { Dynamic } from '../models';
-import { INodeBehavior, VirtualNode } from "./VirtualNode";
+import { VirtualNode } from './VirtualNode'
+import { INodeBehavior, VirtualElement } from "./VirtualElement";
 
 /* ================================================================================================================= */
 /**
@@ -79,7 +80,7 @@ export class BranchingBehavior implements INodeBehavior
     {
     }
     
-    public readPhase(node: VirtualNode): boolean 
+    public readPhase(node: VirtualElement): boolean 
     {
         let model: Dynamic = node.model;
         let branch: Branch = this.m_branches.find(b => b.match(model));

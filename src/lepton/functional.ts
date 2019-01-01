@@ -37,7 +37,7 @@ export function toPredicate<T>(item: T | Predicate<T>): Predicate<T>
 /**
  * A function that describes a matching condition for the given key/value pair.
  */
-export interface mapPredicate<K, V>
+export interface MapPredicate<K, V>
 {
     (key: K, value: V): boolean;
 }

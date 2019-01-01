@@ -1,7 +1,7 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { mapPredicate } from "../../lepton";
+import { Predicate, MapPredicate } from "../../lepton";
 
 /* ================================================================================================================= */
 
@@ -9,13 +9,13 @@ declare global
 {
     interface NamedNodeMap
     {
-        filter(predicate: mapPredicate<string, Attr>): IterableIterator<Attr>;
+        filter(predicate: MapPredicate<string, Attr>): IterableIterator<Attr>;
     }
 }
 
 /* ================================================================================================================= */
 
-function *attributeMapFilter(predicate: mapPredicate<string, Attr>): IterableIterator<Attr>
+function *attributeMapFilter(predicate: MapPredicate<string, Attr>): IterableIterator<Attr>
 {
     for (let key of this as Array<string>)
     {
