@@ -1,8 +1,9 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Observable, Subject } from "rxjs";
+
 import { LogManager } from "../../common/logging";
-import { Observable, Observer, Subject } from "rxjs";
 
 /* ================================================================================================================= */
 
@@ -64,7 +65,7 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
         case DYNAMIC_TAG:
             return this;
 
-        case "observable":
+        case "change$":
             return this.m_subject;
 
         case "notify":
@@ -99,7 +100,7 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
         switch (p)
         {
         case DYNAMIC_TAG:
-        case "observable":
+        case "change$":
         case "notify":
             g_log.error("Attempt to set property {name} denied.", { name: p });
             return false; // Don't allow these to be set.
@@ -152,7 +153,7 @@ export interface Dynamic
     /**
      * The observerable that events can be subscribed to.
      */
-    readonly observable: Observable<ModelEvent>;
+    readonly change$: Observable<ModelEvent>;
 
     /**
      * Sends a ping notification event, useful for forcing updates on computed properties.

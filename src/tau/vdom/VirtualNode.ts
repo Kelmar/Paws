@@ -11,8 +11,6 @@ export abstract class VirtualNode implements IDisposable
     public dispose()
     {
     }
-
-    public abstract clone(): VirtualNode;
 }
 
 /* ================================================================================================================= */

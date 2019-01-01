@@ -3,7 +3,7 @@
 
 import { Dynamic } from '../models';
 import { VirtualNode } from './VirtualNode'
-import { INodeBehavior, VirtualElement } from "./VirtualElement";
+import { RenderContext, ElementBehavior, VirtualElement, RenderPass } from "./VirtualElement";
 
 /* ================================================================================================================= */
 /**
@@ -53,14 +53,12 @@ export class Branch
 /**
  * A node behavior that applies a branch based on a boolean condition.
  */
-export class BranchingBehavior implements INodeBehavior
+export class BranchingBehavior extends ElementBehavior
 {
     private readonly m_branches: Branch[] = [];
     private m_currentBranch: Branch = null;
 
-    constructor()
-    {
-    }
+    public get passFilter(): RenderPass { return RenderPass.ReadModel | RenderPass.Filter | RenderPass.Layout }
 
     public get currentBranch(): Branch
     {
@@ -74,44 +72,29 @@ export class BranchingBehavior implements INodeBehavior
         return rval;
     }
 
-    // INodeBehavior methods
-
-    public initPhase(): void 
+    public readModel(context: RenderContext): void
     {
-    }
-    
-    public readPhase(node: VirtualElement): boolean 
-    {
-        let model: Dynamic = node.model;
-        let branch: Branch = this.m_branches.find(b => b.match(model));
+        let branch: Branch = this.m_branches.find(b => b.match(context.model));
 
         if (branch != this.m_currentBranch)
         {
             this.m_currentBranch = branch;
-            return true;
+            context.dirty = true;
         }
-
-        return false;
     }
 
-    public *filterPhase(): IterableIterator<VirtualNode> 
+    public filter(context: RenderContext): void
     {
         if (!this.m_currentBranch)
             return;
-        
+
         for (let child of this.m_currentBranch.children)
-            yield child;
+        {
+            //yield child;
+        }
     }
 
-    layoutPhase(): void 
-    {
-    }
-
-    modifyPhase(): void 
-    {
-    }
-
-    clanupPhase(): void 
+    layout(context: RenderContext): void
     {
     }
 }

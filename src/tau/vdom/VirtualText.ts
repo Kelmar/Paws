@@ -9,11 +9,6 @@ export class VirtualText extends VirtualNode
     {
         super();
     }
-
-    public clone(): VirtualNode
-    {
-        return new VirtualText(this.text.cloneNode(false) as Text);
-    }
 }
 
 /* ================================================================================================================= */

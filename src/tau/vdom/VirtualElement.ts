@@ -2,55 +2,120 @@
 
 import { LinkedList, IDisposable } from "../../lepton";
 import { Dynamic, ModelEvent } from "../models";
-import { Subscription } from "rxjs";
 import { VirtualNode } from "./VirtualNode";
 
 /* ================================================================================================================= */
-
-export interface INodeBehavior
+/**
+ * The current pass of the rendering engine.
+ * 
+ * This is a set of bit flags to allow a behavior to indicate which passes it is interested in being called on.
+ */
+export enum RenderPass
 {
     /**
-     * Called at the start of the VirtualNode's update sequence.
+     * Reading the DOM to update the model values.
+     *
+     * In this pass, updates to models will not fire events.
      */
-    initPhase(): void;
+    ReadDom = 0x00000001,
 
     /**
-     * Called when the VirtualNode is in the read phase.
-     * 
-     * In this phase the DOM is read and the model values will be updated.  (E.g. input values)
-     * Durring this phase, change events on the model will be ignored.
-     * 
-     * @returns True if this behavior has updates.  False if it does not.
+     * Reading the model to determine if changes need to be made to the DOM.
      */
-    readPhase(node: VirtualElement): boolean;
+    ReadModel = 0x00000002,
 
     /**
-     * Called when the VirtualNode is in the filter phase.
-     * 
-     * In this phase, child nodes are filtered, those that aren't listed after the filter is applied
-     * will be removed from the DOM in the layout phase.
+     * Filtering VirtualNode children for inclusion/exclusion from the DOM.
      */
-    filterPhase(): IterableIterator<VirtualNode>;
+    Filter = 0x00000004,
 
     /**
-     * Called when the VirtualNode is in the layout phase.
-     * 
-     * Durring this phase the DOM tree is adjusted based on the state of the model. (if branches, and for loops)
+     * Updating the DOM structure with new nodes.
      */
-    layoutPhase(): void;
+    Layout = 0x00000008,
 
     /**
-     * Called when the VirutlaNode is in the modify phase.
-     * 
-     * In this phase values about the DOM are updated that reflect their bound model values.  This phase does
-     * not update the DOM in significant ways.  (E.g. attribute, style, and class changes.)
+     * Modifing the DOM with new values.  This is for minor updates where the fundamental structure of the DOM
+     * will not be updated.  This includes things like attribute, style, and class changes.
      */
-    modifyPhase(): void;
+    Modify = 0x00000010,
+}
+
+/* ================================================================================================================= */
+
+export class RenderContext
+{
+    private m_dirty: boolean = false;
+
+    public readonly pass: RenderPass;
+
+    public readonly node: VirtualNode;
+
+    public readonly model: Dynamic;
+
+    constructor(pass: RenderPass, node: VirtualNode, model: Dynamic)
+    {
+        this.pass = pass;
+        this.node = node;
+        this.model = model;
+    }
+
+    public get dirty(): boolean
+    {
+        return this.m_dirty;
+    }
+
+    public set dirty(value: boolean)
+    {
+        this.m_dirty = this.m_dirty || value;
+    }
+}
+
+/* ================================================================================================================= */
+
+export abstract class ElementBehavior
+{
+    /**
+     * Bit flags indicating which passes to call this behavior on.
+     */
+    public abstract readonly passFilter: RenderPass;
 
     /**
-     * Called at the end of the VirtualNode's update.
+     * Dispatches calls from the VirtualEvent.render() call to the correct method.
+     *
+     * @param context The current rendering context
      */
-    clanupPhase(): void;
+    public render(context: RenderContext)
+    {
+        switch (context.pass)
+        {
+        case RenderPass.ReadDom  : this.readDom  (context); break;
+        case RenderPass.ReadModel: this.readModel(context); break;
+        case RenderPass.Filter   : this.filter   (context); break;
+        case RenderPass.Layout   : this.layout   (context); break;
+        case RenderPass.Modify   : this.modify   (context); break;
+        }
+    }
+
+    public readDom(context: RenderContext): void
+    {
+    }
+
+    public readModel(context: RenderContext): void
+    {
+    }
+
+    public filter(context: RenderContext): void
+    {
+    }
+
+    public layout(context: RenderContext): void
+    {
+    }
+
+    public modify(context: RenderContext): void
+    {
+    }
 }
 
 /* ================================================================================================================= */
@@ -58,12 +123,8 @@ export interface INodeBehavior
 export class VirtualElement extends VirtualNode
 {
     private m_children: LinkedList<VirtualNode> = new LinkedList();
-    private m_behaviors: INodeBehavior[] = [];
 
-    private m_updating: boolean = false;
-
-    private m_sub: Subscription = null;
-    private m_model: Dynamic = null;
+    private m_behaviors: ElementBehavior[] = [];
 
     public constructor(readonly container: Element)
     {
@@ -78,26 +139,7 @@ export class VirtualElement extends VirtualNode
         super.dispose();
     }
 
-    public get model(): Dynamic
-    {
-        if (this.m_model)
-            return this.m_model;
-
-        return null;
-    }
-
-    public set model(value: Dynamic)
-    {
-        if (this.m_sub)
-            this.m_sub.unsubscribe();
-
-        this.m_model = value;
-
-        this.m_sub = this.m_model ? this.m_model.observable.subscribe(e => this.modelUpdated(e)) : null;
-        this.modelUpdated(null)
-    }
-
-    public addBehavior(behavior: INodeBehavior): void
+    public addBehavior(behavior: ElementBehavior): void
     {
         this.m_behaviors.push(behavior);
     }
@@ -113,54 +155,16 @@ export class VirtualElement extends VirtualNode
         this.m_children.delete(node);
     }
 
-    public clone(): VirtualNode
-    {
-        let container = this.container.cloneNode(false) as Element;
-        let rval = new VirtualElement(container);
-
-        this.forEach(n => rval.add(n.clone()));
-
-        return rval;
-    }
-
     public forEach(callback: (node: VirtualNode) => void): void
     {
         for (let node of this.m_children)
             callback(node);
     }
 
-    private modelUpdated(event: ModelEvent): void
+    public render(context: RenderContext): void
     {
-        if (!this.m_updating)
-            this.update();
-    }
-
-    public update()
-    {
-        this.m_updating = true;
-
-        function callBehavior(method: string)
-        {
-            for (let behavior of this.m_behaviors)
-            {
-                let b: any = behavior;
-                b[method]();
-            }
-        }
-
-        try
-        {
-            callBehavior("initPhase"   );
-            callBehavior("readPhase"   );
-            callBehavior("filterPhase" );
-            callBehavior("layoutPhase" );
-            callBehavior("modifyPhase" );
-            callBehavior("cleanupPhase");
-        }
-        finally
-        {
-            this.m_updating = false;
-        }
+        for (let behavior of this.m_behaviors.filter(x => (x.passFilter & context.pass) != 0))
+            behavior.render(context);
     }
 }
 
