@@ -1,13 +1,19 @@
-import { VirtualNode } from "./VirtualNode";
+import { AstNode } from "./AstNode";
+import { CodeGenerator } from "./CodeGen";
 
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-export class VirtualText extends VirtualNode
+export class TextNode extends AstNode
 {
-    constructor (readonly text: Text)
+    constructor (readonly text: string)
     {
         super();
+    }
+
+    public compile(codeGen: CodeGenerator): void
+    {
+        codeGen.appendText(this.text);
     }
 }
 

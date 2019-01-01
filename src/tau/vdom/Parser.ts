@@ -3,10 +3,14 @@
 
 import { IDisposable, using } from "../../lepton";
 
-import { VirtualNode } from "./VirtualNode";
-import { BranchingBehavior, Branch } from "./BranchingBehavior";
-import { VirtualElement } from "./VirtualElement";
-import { VirtualText } from "./VirtualText";
+import './utils';
+
+import { AstNode } from "./AstNode";
+import { BranchNode, Branch } from "./BranchNode";
+import { ElementNode } from "./ElementNode";
+import { TextNode } from "./TextNode";
+import { LoopNode } from "./LoopNode";
+import { ILogger, LogManager } from "../../common/logging";
 
 /* ================================================================================================================= */
 
@@ -15,12 +19,17 @@ const exclusiveAttributes: Set<string> = new Set([ 't-if', 't-not-if', 't-for' ]
 /* ================================================================================================================= */
 
 // Parser states.
-
-abstract class ParserState
+interface IParserState
 {
-    public node: VirtualElement;
+    add(child: AstNode): void;
+}
 
-    public add(child: VirtualNode): void
+
+abstract class ParserState<T extends AstNode> implements IParserState
+{
+    public node: T;
+
+    public add(child: AstNode): void
     {
         this.node.add(child);
     }
@@ -28,26 +37,25 @@ abstract class ParserState
 
 /* ================================================================================================================= */
 
-class GenericState extends ParserState
+class GenericState<T extends AstNode> extends ParserState<T>
 {
 }
 
 /* ================================================================================================================= */
 
-class IfState extends ParserState
+class IfState extends ParserState<BranchNode>
 {
-    public ifBehavior: BranchingBehavior;
-    public currentBranch: Branch;
+    public branch: Branch;
 
-    public add(child: VirtualNode): void
+    public add(child: AstNode): void
     {
         super.add(child);
-        this.currentBranch.children.push(child);
+        this.branch.children.push(child);
     }
 
     public addBranch(condition: string): void
     {
-        if (this.currentBranch.condition == '')
+        if (this.branch.condition == '')
         {
             if (condition == '')
                 throw new Error("Cannot have multiple unconditional else clauses on a 'T-IF' tag.");
@@ -55,13 +63,13 @@ class IfState extends ParserState
                 throw new Error("Conditional branch must come before an unconditional branch in a 'T-IF' tag.");
         }
 
-        this.currentBranch = this.ifBehavior.addBranch(condition);
+        this.branch = this.node.addBranch(condition);
     }
 }
 
 /* ================================================================================================================= */
 
-class ForState extends ParserState
+class ForState extends ParserState<LoopNode>
 {
 }
 
@@ -69,9 +77,11 @@ class ForState extends ParserState
 
 export class Parser
 {
-    private m_state: ParserState;
+    private log: ILogger = LogManager.getLogger('paws.tau.vdom.parser');
 
-    private asCurrent(state: ParserState): IDisposable
+    private m_state: IParserState;
+
+    private asCurrent(state: IParserState): IDisposable
     {
         let prev = this.m_state;
         this.m_state = state;
@@ -79,7 +89,7 @@ export class Parser
         return { dispose: () => { this.m_state = prev; } };
     }
 
-    public parse(root: Element): VirtualNode
+    public parse(root: Element): AstNode
     {
         return this.parseElement(root);
     }
@@ -89,11 +99,7 @@ export class Parser
         let children = Array.from(node.childNodes);
 
         for (let childNode of children)
-        {
-            // Parent VirtualNode will re-add children as needed.
-            node.removeChild(childNode);
             this.parseNode(childNode);
-        }
     }
 
     private parseNode(node: Node): void
@@ -106,10 +112,12 @@ export class Parser
                 this.m_state.add(vChild);
         }
         else if (node instanceof Text)
-            this.m_state.add(new VirtualText(node));
+        {
+            this.m_state.add(new TextNode(node.textContent));
+        }
     }
 
-    private parseElement(node: Element): VirtualNode
+    private parseElement(node: Element): AstNode
     {
         let tagName = node.tagName.toLowerCase();
 
@@ -129,11 +137,11 @@ export class Parser
         return this.parseGenericTag(node);
     }
 
-    private parseGenericTag(node: Element): VirtualNode
+    private parseGenericTag(node: Element): AstNode
     {
         // Parse a generic DOM node; note that this could have an exclusive attribute.
 
-        let attrs = Array.from(node.attributes.filter(k => exclusiveAttributes.has(k)));
+        let attrs = Array.from(node.attributes.filter(a => exclusiveAttributes.has(a.name)));
 
         if (attrs.length > 1)
             throw new Error(`${attrs.join(', ')} are not valid on the same tag.`)
@@ -154,8 +162,8 @@ export class Parser
             }
         }
 
-        let production = new GenericState();
-        production.node = new VirtualElement(node);
+        let production = new GenericState<ElementNode>();
+        production.node = new ElementNode(node);
 
         using (this.asCurrent(production), () =>
         {
@@ -167,7 +175,7 @@ export class Parser
         return production.node;
     }
 
-    private parseIfBlock(type: string, node: Element, condition: string, negate: boolean): VirtualNode
+    private parseIfBlock(type: string, node: Element, condition: string, negate: boolean): BranchNode
     {
         if (condition == '')
             throw new Error(`'t-if' ${type} requires a condition.`);
@@ -175,11 +183,8 @@ export class Parser
         // Parse this like an IF tag but using the current element as the root.
         let production = new IfState();
 
-        production.node = new VirtualElement(node);
-        production.ifBehavior = new BranchingBehavior();
-        production.currentBranch = production.ifBehavior.addBranch(condition, negate);
-
-        production.node.addBehavior(production.ifBehavior);
+        production.node = new BranchNode(node);
+        production.branch = production.node.addBranch(condition, negate);
 
         using (this.asCurrent(production), () =>
         {
@@ -191,13 +196,18 @@ export class Parser
         return production.node;
     }
 
-    private parseForBlock(type: string, node: Element, binding: string): VirtualNode
+    private parseForBlock(type: string, node: Element, binding: string): LoopNode
     {
         if (binding == '')
-            throw new Error(`'t-for' ${type} requires 'each' attribute.`);
+        {
+            if (type == 'tag')
+                throw new Error("'t-for' tag requires 'each' attribute.");
+            else
+                throw new Error("'t-for' attribute requires a binding.");
+        }
 
         let production = new ForState();
-        production.node = new VirtualElement(node);
+        production.node = new LoopNode(node, binding);
 
         using (this.asCurrent(production), () =>
         {
@@ -209,7 +219,7 @@ export class Parser
         return production.node;
     }
 
-    private parseIfTag(node: Element): VirtualNode
+    private parseIfTag(node: Element): BranchNode
     {
         let condition = node.getAttribute('is') || '';
         let negate: boolean = false;
@@ -237,16 +247,16 @@ export class Parser
         this.parseChildren(node);
     }
 
-    private parseForTag(node: Element): VirtualNode
+    private parseForTag(node: Element): LoopNode
     {
         let binding = node.getAttribute('each') || '';
 
         return this.parseForBlock('tag', node, binding);
     }
 
-    private parseAttributes(vnode: VirtualElement): void
+    private parseAttributes(vnode: ElementNode): void
     {
-        let normalAttributes = vnode.container.attributes.filter(x => x.startsWith('t-') && !exclusiveAttributes.has(x));
+        let normalAttributes = vnode.container.attributes.filter(a => a.name.startsWith('t-') && !exclusiveAttributes.has(a.name));
 
         for (let attr of normalAttributes)
         {

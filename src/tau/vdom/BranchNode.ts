@@ -1,20 +1,20 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Dynamic } from '../models';
-import { VirtualNode } from './VirtualNode'
-import { RenderContext, ElementBehavior, VirtualElement, RenderPass } from "./VirtualElement";
+import { AstNode } from "./AstNode";
+import { ElementNode } from "./ElementNode";
+import { CodeGenerator } from "./CodeGen";
 
 /* ================================================================================================================= */
 /**
- * A single branch of our branching behavior with it's condition
+ * A single branch of our branching node with it's condition
  */
 export class Branch
 {
     /**
      * List of children that apply to this branch.
      */
-    public readonly children: VirtualNode[] = [];
+    public readonly children: AstNode[] = [];
 
     /**
      * The condition that matches this branch.
@@ -39,7 +39,7 @@ export class Branch
      *
      * @param model The model to check against.
      */
-    public match(model: Dynamic): boolean
+    public match(model: any): boolean
     {
         if (!this.condition)
             return true; // Default always matches.
@@ -50,15 +50,11 @@ export class Branch
 }
 
 /* ================================================================================================================= */
-/**
- * A node behavior that applies a branch based on a boolean condition.
- */
-export class BranchingBehavior extends ElementBehavior
+
+export class BranchNode extends ElementNode
 {
     private readonly m_branches: Branch[] = [];
     private m_currentBranch: Branch = null;
-
-    public get passFilter(): RenderPass { return RenderPass.ReadModel | RenderPass.Filter | RenderPass.Layout }
 
     public get currentBranch(): Branch
     {
@@ -72,30 +68,34 @@ export class BranchingBehavior extends ElementBehavior
         return rval;
     }
 
-    public readModel(context: RenderContext): void
+    protected compileBranch(codeGen: CodeGenerator, branch: Branch, endLabel: string)
     {
-        let branch: Branch = this.m_branches.find(b => b.match(context.model));
+        let label: string = '';
 
-        if (branch != this.m_currentBranch)
+        if (branch.condition != '')
         {
-            this.m_currentBranch = branch;
-            context.dirty = true;
+            label = codeGen.createLabel();
+            codeGen.test(branch.condition, label);
+        }
+
+        for (let child of branch.children)
+            child.compile(codeGen);
+
+        if (label != '')
+        {
+            codeGen.jump(endLabel);
+            codeGen.emitLabel(label);
         }
     }
 
-    public filter(context: RenderContext): void
+    protected innerCompile(codeGen: CodeGenerator): void
     {
-        if (!this.m_currentBranch)
-            return;
+        let endLabel = codeGen.createLabel();
 
-        for (let child of this.m_currentBranch.children)
-        {
-            //yield child;
-        }
-    }
+        for (let branch of this.m_branches)
+            this.compileBranch(codeGen, branch, endLabel);
 
-    layout(context: RenderContext): void
-    {
+        codeGen.emitLabel(endLabel);
     }
 }
 

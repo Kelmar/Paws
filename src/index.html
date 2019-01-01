@@ -61,6 +61,13 @@
     </body>
 
     <script type="text/javascript">
+        const { Parser, CodeGenerator } = require('./tau/vdom');
+
+        let el = document.getElementById('test3');
+        let p = new Parser();
+        let root = p.parse(el);
+        let cg = new CodeGenerator();
+
         //const { IPC } = require('./backend/IpcTransport');
         //const { Transport } = require('./backend/Transport');
 

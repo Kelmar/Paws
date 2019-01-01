@@ -9,20 +9,18 @@ declare global
 {
     interface NamedNodeMap
     {
-        filter(predicate: MapPredicate<string, Attr>): IterableIterator<Attr>;
+        filter(predicate: Predicate<Attr>): IterableIterator<Attr>;
     }
 }
 
 /* ================================================================================================================= */
 
-function *attributeMapFilter(predicate: MapPredicate<string, Attr>): IterableIterator<Attr>
+function *attributeMapFilter(predicate: Predicate<Attr>): IterableIterator<Attr>
 {
-    for (let key of this as Array<string>)
+    for (let attr of this as Array<Attr>)
     {
-        let value: Attr = this[key];
-
-        if (predicate(key, value))
-            yield value;
+        if (predicate(attr))
+            yield attr;
     }
 }
 
