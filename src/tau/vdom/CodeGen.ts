@@ -69,7 +69,9 @@ with ($item) {`);
 
     public popTag(): void
     {
-        this.output.write("$element = $__tag_stack.pop();");
+        this.output.write(`$__e = $__tag_stack.pop();
+if ($__e) $__e.appendChild($element);
+$element = $__e;`);
     }
 
     public appendText(text: string)
@@ -84,7 +86,7 @@ with ($item) {`);
     public pushModel(name: string): void
     {
         this.output.write(`$item = $__item_stack.push(${name});
-        with (${name}) {`);
+with ($item) {`);
     }
 
     public popModel()
@@ -110,9 +112,14 @@ $item = $__item_stack.pop();`);
         this.output.write(`goto ${label};`);
     }
 
-    public test(condition: string, falseLabel: string)
+    public jump_true(condition: string, trueLabel: string)
     {
-        this.output.write(`if (!(${condition})) goto ${falseLabel}`);
+        this.output.write(`if (${condition}) goto ${trueLabel};`);
+    }
+
+    public jump_false(condition: string, falseLabel: string)
+    {
+        this.output.write(`if (!(${condition})) goto ${falseLabel};`);
     }
 }
 

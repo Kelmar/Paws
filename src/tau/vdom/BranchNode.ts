@@ -75,7 +75,7 @@ export class BranchNode extends ElementNode
         if (branch.condition != '')
         {
             label = codeGen.createLabel();
-            codeGen.test(branch.condition, label);
+            codeGen.jump_false(branch.condition, label);
         }
 
         for (let child of branch.children)

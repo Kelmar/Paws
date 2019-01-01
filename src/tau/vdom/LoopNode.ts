@@ -23,7 +23,7 @@ export class LoopNode extends ElementNode
         console.log(`let it = Array.from(${this.binding});`);
 
         codeGen.emitLabel(topLabel);
-        codeGen.test('it.length > 0', endLabel);
+        codeGen.jump_true('it.length == 0', endLabel);
         codeGen.pushModel('it.shift()');
 
         this.compileChildren(codeGen);
