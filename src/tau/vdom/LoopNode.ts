@@ -19,14 +19,16 @@ export class LoopNode extends ElementNode
         let topLabel = codeGen.createLabel();
         let endLabel = codeGen.createLabel();
 
-        console.log(`let it = ${this.binding}();`);
+        // FIX
+        console.log(`let it = Array.from(${this.binding});`);
 
         codeGen.emitLabel(topLabel);
-        console.log(`let res = it.next();`);
-        codeGen.test('res.done', endLabel);
+        codeGen.test('it.length > 0', endLabel);
+        codeGen.pushModel('it.shift()');
 
         this.compileChildren(codeGen);
 
+        codeGen.popModel();
         codeGen.jump(topLabel);
         codeGen.emitLabel(endLabel);
     }
