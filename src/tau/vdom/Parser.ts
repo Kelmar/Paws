@@ -42,12 +42,12 @@ class GenericState<T extends ElementNode> extends ParserState<T>
 {
     public unprocessed: LinkedList<Attr> = new LinkedList();
 
-    constructor(node: T)
+    constructor(node: T, attributes: NamedNodeMap)
     {
         super();
         this.node = node;
 
-        for (let a of this.node.container.attributes)
+        for (let a of attributes)
             this.unprocessed.push(a);
     }
 
@@ -68,9 +68,9 @@ class IfState extends GenericState<BranchNode>
 {
     public branch: Branch;
 
-    constructor(node: BranchNode)
+    constructor(node: BranchNode, attributes: NamedNodeMap)
     {
-        super(node);
+        super(node, attributes);
     }
 
     public add(child: AstNode): void
@@ -182,7 +182,8 @@ export class Parser
             }
         }
 
-        let state = new GenericState<ElementNode>(new ElementNode(node));
+        let elNode = new ElementNode(node.tagName);
+        let state = new GenericState<ElementNode>(elNode, node.attributes);
 
         using (this.asCurrent(state), () =>
         {
@@ -199,7 +200,10 @@ export class Parser
             throw new Error(`'t-if' ${type} requires a condition.`);
 
         // Parse this like an IF tag but using the current element as the root.
-        let state = new IfState(new BranchNode(node));
+
+        let branchNode = new BranchNode(node.tagName);
+        let state = new IfState(branchNode, node.attributes);
+
         state.branch = state.node.addBranch(condition, negate);
 
         if (type == 'tag')
@@ -226,7 +230,8 @@ export class Parser
                 throw new Error("'t-for' attribute requires a binding.");
         }
 
-        let state = new GenericState(new LoopNode(node, binding));
+        let loopNode = new LoopNode(node.tagName, binding);
+        let state = new GenericState(loopNode, node.attributes);
 
         if (type == 'tag')
             state.processedAttribute('each');

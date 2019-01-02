@@ -16,15 +16,11 @@ class Attribute
 
 export class ElementNode extends AstNode
 {
-    public readonly tagName: string;
-
     private readonly m_attributes: Attribute[] = [];
 
-    public constructor(readonly container: Element)
+    public constructor(readonly tagName: string)
     {
         super();
-
-        this.tagName = container.tagName;
     }
 
     protected innerCompile(codeGen: CodeGenerator): void

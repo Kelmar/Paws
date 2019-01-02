@@ -9,9 +9,9 @@ import { CodeGenerator } from "./CodeGen";
 
 export class LoopNode extends ElementNode
 {
-    constructor(container: Element, readonly binding: string)
+    constructor(tagName: string, readonly binding: string)
     {
-        super(container);
+        super(tagName);
     }
 
     protected innerCompile(codeGen: CodeGenerator): void
