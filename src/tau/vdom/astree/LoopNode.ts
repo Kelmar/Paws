@@ -25,7 +25,7 @@ export class LoopNode extends ElementNode
         codeGen.emitLabel(topLabel);        // Start of loop
 
         // Go to end if empty
-        codeGen.jump_true("this.$item.length == 0", endLabel);
+        codeGen.jump_true("length == 0", endLabel);
 
         codeGen.push();                     // Save iterator
         codeGen.next();                     // Load top of array (and shift)

@@ -3,12 +3,8 @@
 
 import '../../common/string';
 
-/* ================================================================================================================= */
-
-interface ICodeOutput
-{
-    write(text: string): void;
-}
+import { ICodeOutput } from "./CodeOutput";
+import { IDisposable } from 'lepton';
 
 /* ================================================================================================================= */
 
@@ -17,16 +13,6 @@ interface ICodeOutput
  */
 export interface ILabel
 {
-}
-
-/* ================================================================================================================= */
-
-export class ConsoleOutput implements ICodeOutput
-{
-    public write(text: string): void
-    {
-        console.log(text);
-    }
 }
 
 /* ================================================================================================================= */
@@ -99,7 +85,7 @@ class Label implements ILabel
 
 /* ================================================================================================================= */
 
-export class CodeGenerator
+export class CodeGenerator implements IDisposable
 {
     public readonly element: ElementManipulator;
 
@@ -108,14 +94,20 @@ export class CodeGenerator
     constructor(readonly output: ICodeOutput)
     {
         this.element = new ElementManipulator(output);
+        this.writeHeader();
     }
 
-    public writeHeader()
+    public dispose(): void
+    {
+        this.writeFooter();
+    }
+
+    public writeHeader(): void
     {
         this.output.write(`function render($item) {`);
     }
 
-    public writeFooter()
+    public writeFooter(): void
     {
         this.output.write('}');
     }
@@ -125,22 +117,22 @@ export class CodeGenerator
         this.output.write("this.push_model();");
     }
 
-    public load(name: string)
+    public load(name: string): void
     {
         this.output.write(`this.$item = this.$item.${name};`);
     }
 
-    public array()
+    public array(): void
     {
         this.output.write("this.$item = Array.from(this.$item);");
     }
 
-    public next()
+    public next(): void
     {
         this.output.write("this.$item = this.$item.shift();");
     }
 
-    public pop()
+    public pop(): void
     {
         this.output.write(`this.pop_model();`);
     }
@@ -152,28 +144,28 @@ export class CodeGenerator
         return new Label(rval);
     }
 
-    public emitLabel(label: ILabel)
+    public emitLabel(label: ILabel): void
     {
         let l = label as Label;
-        this.output.write(`[lbl] ${l.value}:`);
+        this.output.write(`${l.value}:`);
     }
 
-    public jump(label: ILabel)
+    public jump(label: ILabel): void
     {
         let l = label as Label;
-        this.output.write(`goto ${l.value};`);
+        this.output.write(`continue ${l.value};`);
     }
 
-    public jump_true(condition: string, trueLabel: ILabel)
+    public jump_true(condition: string, trueLabel: ILabel): void
     {
         let l = trueLabel as Label;
-        this.output.write(`if (this.$item.${condition}) goto ${l.value};`);
+        this.output.write(`if (this.$item.${condition}) continue ${l.value};`);
     }
 
-    public jump_false(condition: string, falseLabel: ILabel)
+    public jump_false(condition: string, falseLabel: ILabel): void
     {
         let l = falseLabel as Label;
-        this.output.write(`if (!(this.$item.${condition})) goto ${l.value};`);
+        this.output.write(`if (!(this.$item.${condition})) continue ${l.value};`);
     }
 }
 

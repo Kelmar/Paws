@@ -61,13 +61,44 @@
     </body>
 
     <script type="text/javascript">
-        const { Parser, CodeGenerator, ConsoleOutput } = require('./tau/vdom');
+        const { using } = require('./lepton/lifecycle');
+        const { Parser, CodeGenerator, StringOutput } = require('./tau/vdom');
+        const { Renderer } = require('./tau/renderer');
 
         let el = document.getElementById('test3');
         let p = new Parser();
         let root = p.parse(el);
-        let cons = new ConsoleOutput();
-        let cg = new CodeGenerator(cons);
+        let { render } = require('../sandbox/render');
+
+        /*
+        using (new StringOutput(), out =>
+        {
+            using (new CodeGenerator(out), codeGen =>
+            {
+                root.compile(codeGen);
+            });
+
+            //comp = eval(out.toString());
+
+            console.log(out.toString());
+        });
+        */
+        
+        let parent = el.parentElement;
+        parent.removeChild(el);
+
+        let model = { 
+            on: true, 
+            name: 'It',
+            items: [
+                { id: 1, name: "Bugs Bunny" },
+                { id: 2, name: "Daffy Duck" },
+                { id: 3, name: "Elmer Fudd" },
+            ]
+        };
+
+        let r = new Renderer();
+        r.execute(model, render);
 
         //const { IPC } = require('./backend/IpcTransport');
         //const { Transport } = require('./backend/Transport');
@@ -88,15 +119,7 @@
         let p = new BindingParser2();
         let el = document.getElementById('test3');
         let vn = p.parse(el);
-        let model = makeDynamic({ 
-            on: true, 
-            name: 'It',
-            items: [
-                { id: 1, name: "Bugs Bunny" },
-                { id: 2, name: "Daffy Duck" },
-                { id: 3, name: "Elmer Fudd" },
-            ]
-        });
+        
         */
     </script>
 </html>

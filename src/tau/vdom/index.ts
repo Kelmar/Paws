@@ -3,6 +3,7 @@
 
 export * from './astree/AstNode';
 export * from './Parser';
+export * from './CodeOutput';
 export * from './CodeGen';
 
 /* ================================================================================================================= */

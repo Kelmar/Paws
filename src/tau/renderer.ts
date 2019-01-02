@@ -13,6 +13,18 @@ export class Renderer
     public $item: any;
     public $element: HTMLElement;
 
+    constructor (readonly parent: HTMLElement)
+    {
+    }
+
+    public execute(model: any, fn: Function): void
+    {
+        fn.apply(this, model);
+
+        if (this.$element != null)
+            this.parent.appendChild(this.$element);
+    }
+
     protected push_model(value: any): void
     {
         this.__m_modelStack.push(this.$item);
