@@ -1,7 +1,7 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IDisposable, using } from "../../lepton";
+import { IDisposable, using, LinkedList } from "../../lepton";
 
 import './utils';
 
@@ -24,6 +24,7 @@ interface IParserState
     add(child: AstNode): void;
 }
 
+/* ================================================================================================================= */
 
 abstract class ParserState<T extends AstNode> implements IParserState
 {
@@ -37,15 +38,40 @@ abstract class ParserState<T extends AstNode> implements IParserState
 
 /* ================================================================================================================= */
 
-class GenericState<T extends AstNode> extends ParserState<T>
+class GenericState<T extends ElementNode> extends ParserState<T>
 {
+    public unprocessed: LinkedList<Attr> = new LinkedList();
+
+    constructor(node: T)
+    {
+        super();
+        this.node = node;
+
+        for (let a of this.node.container.attributes)
+            this.unprocessed.push(a);
+    }
+
+    public processedAttribute(name: string)
+    {
+        this.unprocessed.delete(x => x.name == name);
+    }
+
+    public addAttribute(name: string, value: string, isStatic: boolean)
+    {
+        this.node.addAttribute(name, value, isStatic);
+    }
 }
 
 /* ================================================================================================================= */
 
-class IfState extends ParserState<BranchNode>
+class IfState extends GenericState<BranchNode>
 {
     public branch: Branch;
+
+    constructor(node: BranchNode)
+    {
+        super(node);
+    }
 
     public add(child: AstNode): void
     {
@@ -65,12 +91,6 @@ class IfState extends ParserState<BranchNode>
 
         this.branch = this.node.addBranch(condition);
     }
-}
-
-/* ================================================================================================================= */
-
-class ForState extends ParserState<LoopNode>
-{
 }
 
 /* ================================================================================================================= */
@@ -162,17 +182,15 @@ export class Parser
             }
         }
 
-        let production = new GenericState<ElementNode>();
-        production.node = new ElementNode(node);
+        let state = new GenericState<ElementNode>(new ElementNode(node));
 
-        using (this.asCurrent(production), () =>
+        using (this.asCurrent(state), () =>
         {
+            this.parseAttributes();
             this.parseChildren(node);
-        })
+        });
 
-        this.parseAttributes(production.node);
-
-        return production.node;
+        return state.node;
     }
 
     private parseIfBlock(type: string, node: Element, condition: string, negate: boolean): BranchNode
@@ -181,19 +199,21 @@ export class Parser
             throw new Error(`'t-if' ${type} requires a condition.`);
 
         // Parse this like an IF tag but using the current element as the root.
-        let production = new IfState();
+        let state = new IfState(new BranchNode(node));
+        state.branch = state.node.addBranch(condition, negate);
 
-        production.node = new BranchNode(node);
-        production.branch = production.node.addBranch(condition, negate);
+        if (type == 'tag')
+            state.processedAttribute(negate ? 'not' : 'is');
+        else
+            state.processedAttribute('t-if');
 
-        using (this.asCurrent(production), () =>
+        using (this.asCurrent(state), () =>
         {
+            this.parseAttributes();
             this.parseChildren(node);
         });
 
-        this.parseAttributes(production.node);
-
-        return production.node;
+        return state.node;
     }
 
     private parseForBlock(type: string, node: Element, binding: string): LoopNode
@@ -206,17 +226,20 @@ export class Parser
                 throw new Error("'t-for' attribute requires a binding.");
         }
 
-        let production = new ForState();
-        production.node = new LoopNode(node, binding);
+        let state = new GenericState(new LoopNode(node, binding));
 
-        using (this.asCurrent(production), () =>
+        if (type == 'tag')
+            state.processedAttribute('each');
+        else
+            state.processedAttribute('t-for');
+
+        using (this.asCurrent(state), () =>
         {
+            this.parseAttributes();
             this.parseChildren(node);
         });
 
-        this.parseAttributes(production.node);
-
-        return production.node;
+        return state.node;
     }
 
     private parseIfTag(node: Element): BranchNode
@@ -254,13 +277,19 @@ export class Parser
         return this.parseForBlock('tag', node, binding);
     }
 
-    private parseAttributes(vnode: ElementNode): void
+    private parseAttributes(): void
     {
-        let normalAttributes = vnode.container.attributes.filter(a => a.name.startsWith('t-') && !exclusiveAttributes.has(a.name));
+        if (!(this.m_state instanceof GenericState))
+            throw new Error("LOGIC ERROR: Not in GenericState to add attributes!");
 
-        for (let attr of normalAttributes)
-        {
-        }
+        let state = this.m_state;
+
+        this.m_state.unprocessed.forEach((attr: Attr) => {
+            let isStatic = !attr.name.startsWith('t-');
+            let name = isStatic ? attr.name : attr.name.substr(2);
+
+            state.addAttribute(name, attr.value, isStatic);
+        });
     }
 }
 
