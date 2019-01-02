@@ -2,15 +2,12 @@
 /* ================================================================================================================= */
 
 import { IDisposable, using, LinkedList } from "../../lepton";
+import { ILogger, LogManager } from "../../common/logging";
 
 import './utils';
 
-import { AstNode } from "./AstNode";
-import { BranchNode, Branch } from "./BranchNode";
-import { ElementNode } from "./ElementNode";
-import { TextNode } from "./TextNode";
-import { LoopNode } from "./LoopNode";
-import { ILogger, LogManager } from "../../common/logging";
+import "./astree";
+import * as ast from "./astree";
 
 /* ================================================================================================================= */
 
@@ -21,16 +18,16 @@ const exclusiveAttributes: Set<string> = new Set([ 't-if', 't-not-if', 't-for' ]
 // Parser states.
 interface IParserState
 {
-    add(child: AstNode): void;
+    add(child: ast.AstNode): void;
 }
 
 /* ================================================================================================================= */
 
-abstract class ParserState<T extends AstNode> implements IParserState
+abstract class ParserState<T extends ast.AstNode> implements IParserState
 {
     public node: T;
 
-    public add(child: AstNode): void
+    public add(child: ast.AstNode): void
     {
         this.node.add(child);
     }
@@ -38,7 +35,7 @@ abstract class ParserState<T extends AstNode> implements IParserState
 
 /* ================================================================================================================= */
 
-class GenericState<T extends ElementNode> extends ParserState<T>
+class GenericState<T extends ast.ElementNode> extends ParserState<T>
 {
     public unprocessed: LinkedList<Attr> = new LinkedList();
 
@@ -55,25 +52,20 @@ class GenericState<T extends ElementNode> extends ParserState<T>
     {
         this.unprocessed.delete(x => x.name == name);
     }
-
-    public addAttribute(name: string, value: string, isStatic: boolean)
-    {
-        this.node.addAttribute(name, value, isStatic);
-    }
 }
 
 /* ================================================================================================================= */
 
-class IfState extends GenericState<BranchNode>
+class IfState extends GenericState<ast.BranchNode>
 {
-    public branch: Branch;
+    public branch: ast.Branch;
 
-    constructor(node: BranchNode, attributes: NamedNodeMap)
+    constructor(node: ast.BranchNode, attributes: NamedNodeMap)
     {
         super(node, attributes);
     }
 
-    public add(child: AstNode): void
+    public add(child: ast.AstNode): void
     {
         super.add(child);
         this.branch.children.push(child);
@@ -109,7 +101,7 @@ export class Parser
         return { dispose: () => { this.m_state = prev; } };
     }
 
-    public parse(root: Element): AstNode
+    public parse(root: Element): ast.AstNode
     {
         return this.parseElement(root);
     }
@@ -133,11 +125,11 @@ export class Parser
         }
         else if (node instanceof Text)
         {
-            this.m_state.add(new TextNode(node.textContent));
+            this.m_state.add(new ast.TextNode(node.textContent));
         }
     }
 
-    private parseElement(node: Element): AstNode
+    private parseElement(node: Element): ast.AstNode
     {
         let tagName = node.tagName.toLowerCase();
 
@@ -157,7 +149,7 @@ export class Parser
         return this.parseGenericTag(node);
     }
 
-    private parseGenericTag(node: Element): AstNode
+    private parseGenericTag(node: Element): ast.AstNode
     {
         // Parse a generic DOM node; note that this could have an exclusive attribute.
 
@@ -182,8 +174,8 @@ export class Parser
             }
         }
 
-        let elNode = new ElementNode(node.tagName);
-        let state = new GenericState<ElementNode>(elNode, node.attributes);
+        let elNode = new ast.ElementNode(node.tagName);
+        let state = new GenericState<ast.ElementNode>(elNode, node.attributes);
 
         using (this.asCurrent(state), () =>
         {
@@ -194,14 +186,14 @@ export class Parser
         return state.node;
     }
 
-    private parseIfBlock(type: string, node: Element, condition: string, negate: boolean): BranchNode
+    private parseIfBlock(type: string, node: Element, condition: string, negate: boolean): ast.BranchNode
     {
         if (condition == '')
             throw new Error(`'t-if' ${type} requires a condition.`);
 
         // Parse this like an IF tag but using the current element as the root.
 
-        let branchNode = new BranchNode(node.tagName);
+        let branchNode = new ast.BranchNode(node.tagName);
         let state = new IfState(branchNode, node.attributes);
 
         state.branch = state.node.addBranch(condition, negate);
@@ -220,7 +212,7 @@ export class Parser
         return state.node;
     }
 
-    private parseForBlock(type: string, node: Element, binding: string): LoopNode
+    private parseForBlock(type: string, node: Element, binding: string): ast.LoopNode
     {
         if (binding == '')
         {
@@ -230,7 +222,7 @@ export class Parser
                 throw new Error("'t-for' attribute requires a binding.");
         }
 
-        let loopNode = new LoopNode(node.tagName, binding);
+        let loopNode = new ast.LoopNode(node.tagName, binding);
         let state = new GenericState(loopNode, node.attributes);
 
         if (type == 'tag')
@@ -247,7 +239,7 @@ export class Parser
         return state.node;
     }
 
-    private parseIfTag(node: Element): BranchNode
+    private parseIfTag(node: Element): ast.BranchNode
     {
         let condition = node.getAttribute('is') || '';
         let negate: boolean = false;
@@ -275,7 +267,7 @@ export class Parser
         this.parseChildren(node);
     }
 
-    private parseForTag(node: Element): LoopNode
+    private parseForTag(node: Element): ast.LoopNode
     {
         let binding = node.getAttribute('each') || '';
 
@@ -287,14 +279,27 @@ export class Parser
         if (!(this.m_state instanceof GenericState))
             throw new Error("LOGIC ERROR: Not in GenericState to add attributes!");
 
-        let state = this.m_state;
+        this.m_state.unprocessed.forEach((attr: Attr) => this.m_state.add(this.parseAttribute(attr)));
+    }
 
-        this.m_state.unprocessed.forEach((attr: Attr) => {
-            let isStatic = !attr.name.startsWith('t-');
-            let name = isStatic ? attr.name : attr.name.substr(2);
+    private parseAttribute(attr: Attr): ast.AttributeNode
+    {
+        let isDynamic = attr.name.startsWith('t-');
+        let name = isDynamic ? attr.name.substr(2) : attr.name;
 
-            state.addAttribute(name, attr.value, isStatic);
-        });
+        if (isDynamic)
+        {
+            if (name.startsWith('class'))
+                return new ast.ClassAttributeNode(name, attr.value);
+
+            if (name == 'html')
+                return new ast.HtmlAttributeNode(attr.value);
+
+            if (name == 'text')
+                return new ast.TextAttributeNode(attr.value);
+        }
+
+        return new ast.GenericAttributeNode(name, attr.value, !isDynamic);
     }
 }
 

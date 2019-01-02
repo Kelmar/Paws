@@ -6,6 +6,8 @@ declare global
     interface String
     {
         formatPegasus<T>(properties: T): string;
+        escapeJS(): string;
+        escapeHTML(): string;
     }
 }
 
@@ -99,7 +101,34 @@ function formatPegasus<T>(properties: T): string
 
 /* ================================================================================================================= */
 
+function escapeJS(): string
+{
+    return this
+        .replace('\\', '\\\\')
+        .replace("'", "\\'")
+        .replace('"', '\\"')
+        .replace('`', '\\`')
+    ;
+}
+
+/* ================================================================================================================= */
+
+function escapeHTML(): string
+{
+    return this
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+        .replace("'", '&apos;')
+        .replace('"', '&quot;')
+    ;
+}
+
+/* ================================================================================================================= */
+
 String.prototype.formatPegasus = formatPegasus;
+String.prototype.escapeJS = escapeJS;
+String.prototype.escapeHTML = escapeHTML;
 
 /* ================================================================================================================= */
 

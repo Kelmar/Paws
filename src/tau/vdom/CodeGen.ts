@@ -1,6 +1,10 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import '../../common/string';
+
+/* ================================================================================================================= */
+
 interface ICodeOutput
 {
     write(text: string): void;
@@ -18,19 +22,68 @@ export class ConsoleOutput implements ICodeOutput
 
 /* ================================================================================================================= */
 
-export class CodeGenerator
+export class ElementManipulator
 {
-    private m_labelId: number = 0;
-    private m_iteratorId: number = 0;
-
-    constructor(readonly output: ICodeOutput)
+    constructor (readonly output: ICodeOutput)
     {
     }
 
     public writeHeader()
     {
+        this.output.write('let $__tag_stack = [];');
+    }
+
+    public push(tagName: string): void
+    {
+        tagName = tagName.escapeJS();
+
+        this.output.write(`$element = $__tag_stack.push(document.createElement("${tagName}"));`);
+    }
+
+    public pop(): void
+    {
+        this.output.write(`$__e = $__tag_stack.pop();
+if ($__e) $__e.appendChild($element);
+$element = $__e;`);
+    }
+
+    public setAttribute(name: string, value: string, isStatic: boolean)
+    {
+        name = name.escapeJS();
+
+        if (isStatic)
+            value = "'" + value.escapeJS() + "'";
+
+        this.output.write(`$element.setAttribute('${name}', ${value});`);
+    }
+
+    public appendStaticText(text: string)
+    {
+        text = text.replace(/(\s\s+)/, ' ') // Replace consecutive spaces with a single space.
+            .escapeJS()
+            .escapeHTML();
+
+        this.output.write(`$element.innerHTML += '${text}';`);
+    }
+}
+
+/* ================================================================================================================= */
+
+export class CodeGenerator
+{
+    public readonly element: ElementManipulator;
+
+    private m_labelId: number = 0;
+    private m_iteratorId: number = 0;
+
+    constructor(readonly output: ICodeOutput)
+    {
+        this.element = new ElementManipulator(output);
+    }
+
+    public writeHeader()
+    {
         this.output.write(`function render($item) {
-    let $__tag_stack = [];
     let $__item_stack = [];
 with ($item) {`);
     }
@@ -38,60 +91,6 @@ with ($item) {`);
     public writeFooter()
     {
         this.output.write('}}');
-    }
-
-    private escapeStringHTML(str: string): string
-    {
-        return str
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;')
-            .replace("'", '&apos;')
-            .replace('"', '&quot;')
-        ;
-    }
-
-    private escapeStringJS(str: string): string
-    {
-        return str
-            .replace('\\', '\\\\')
-            .replace("'", "\\'")
-            .replace('"', '\\"')
-            .replace('`', '\\`')
-        ;
-    }
-
-    public pushTag(tagName: string): void
-    {
-        tagName = this.escapeStringJS(tagName);
-
-        this.output.write(`$element = $__tag_stack.push(document.createElement("${tagName}"));`);
-    }
-
-    public popTag(): void
-    {
-        this.output.write(`$__e = $__tag_stack.pop();
-if ($__e) $__e.appendChild($element);
-$element = $__e;`);
-    }
-
-    public addAttribute(name: string, value: string, isStatic: boolean)
-    {
-        name = this.escapeStringJS(name);
-
-        if (isStatic)
-            value = "'" + this.escapeStringJS(value) + "'";
-
-        this.output.write(`$element.setAttribute('${name}', ${value});`);
-    }
-
-    public appendText(text: string)
-    {
-        text = text.replace(/(\s\s+)/, ' '); // Replace consecutive spaces with a single space.
-        text = this.escapeStringJS(text);
-        text = this.escapeStringHTML(text);
-
-        this.output.write(`$element.innerHTML += '${text}';`);
     }
 
     public pushModel(name: string): void

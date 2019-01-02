@@ -3,7 +3,7 @@
 
 import { AstNode } from "./AstNode";
 import { ElementNode } from "./ElementNode";
-import { CodeGenerator } from "./CodeGen";
+import { CodeGenerator } from "../CodeGen";
 
 /* ================================================================================================================= */
 /**
