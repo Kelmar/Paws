@@ -47,6 +47,18 @@ if ($__e) $__e.appendChild($element);
 $element = $__e;`);
     }
 
+    public addClasses(classes: string[]): void
+    {
+        let classList = classes.map(x => x.escapeJS()).join('", "');
+        this.output.write(`$element.classList.add("${classList}")`);
+    }
+
+    public removeClasses(classes: string[]): void
+    {
+        let classList = classes.map(x => x.escapeJS()).join('", "');
+        this.output.write(`$element.classList.remove("${classList}")`);
+    }
+
     public setAttribute(name: string, value: string, isStatic: boolean)
     {
         name = name.escapeJS();

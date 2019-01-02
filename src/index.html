@@ -46,14 +46,14 @@
                 <span t-text="name"></span> is off.
             </div>
             <h4>If tag test</h4>
-            <div>
+            <div t-class='compClass'>
                 <t-if is="on">
                     <span t-text="name"></span> is on.
                 <t-else />
                     <span t-text="name"></span> is off.
                 </t-if>
             </div>
-            <h4>For tag test</h4>
+            <h4 t-class-bar='bar'>For tag test</h4>
             <ul t-for="items">
                 <li>Item <span t-html="id"></span>: <span t-html="name"></span></li>
             </ul>

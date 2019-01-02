@@ -20,6 +20,22 @@ export class ClassAttributeNode extends AttributeNode
 
     public compile(codeGen: CodeGenerator): void
     {
+        let classes = this.classNames;
+
+        if (classes.length == 0)
+            codeGen.element.setAttribute(this.value, 'class', false);
+        else
+        {
+            let unsetLabel = codeGen.createLabel();
+            let endLabel = codeGen.createLabel();
+
+            codeGen.jump_false(this.value, unsetLabel);
+            codeGen.element.addClasses(classes);
+            codeGen.jump(endLabel);
+            codeGen.emitLabel(unsetLabel);
+            codeGen.element.removeClasses(classes);
+            codeGen.emitLabel(endLabel);
+        }
     }
 }
 
