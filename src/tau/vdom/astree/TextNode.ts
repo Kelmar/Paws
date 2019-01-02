@@ -15,7 +15,7 @@ export class TextNode extends AstNode
 
     public compile(codeGen: CodeGenerator): void
     {
-        codeGen.element.appendStaticText(this.text);
+        codeGen.element.appendText(this.text, true, true);
     }
 }
 

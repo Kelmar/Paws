@@ -15,7 +15,7 @@ export class HtmlAttributeNode extends AttributeNode
 
     public compile(codeGen: CodeGenerator): void
     {
-        
+        codeGen.element.appendText(this.value, false, false);
     }
 }
 

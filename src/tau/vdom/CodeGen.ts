@@ -69,13 +69,22 @@ $element = $__e;`);
         this.output.write(`$element.setAttribute('${name}', ${value});`);
     }
 
-    public appendStaticText(text: string)
+    public appendText(text: string, isStatic :boolean, escape: boolean)
     {
-        text = text.replace(/(\s\s+)/, ' ') // Replace consecutive spaces with a single space.
-            .escapeJS()
-            .escapeHTML();
+        if (isStatic)
+        {
+            text = text.escapeJS();
 
-        this.output.write(`$element.innerHTML += '${text}';`);
+            if (escape)
+            {
+                text = text.replace(/(\s\s+)/, ' ') // Replace consecutive spaces with a single space.
+                    .escapeHTML();
+            }
+
+            this.output.write(`$element.innerHTML += '${text}';`);
+        }
+        else
+            this.output.write(`$element.innterHTML += ${text}` + (escape ? '.escapeHTML();' : ';'));
     }
 }
 
