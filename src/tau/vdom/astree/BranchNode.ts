@@ -3,7 +3,7 @@
 
 import { AstNode } from "./AstNode";
 import { ElementNode } from "./ElementNode";
-import { CodeGenerator } from "../CodeGen";
+import { CodeGenerator, ILabel } from "../CodeGen";
 
 /* ================================================================================================================= */
 /**
@@ -68,9 +68,9 @@ export class BranchNode extends ElementNode
         return rval;
     }
 
-    protected compileBranch(codeGen: CodeGenerator, branch: Branch, endLabel: string)
+    protected compileBranch(codeGen: CodeGenerator, branch: Branch, endLabel: ILabel)
     {
-        let label: string = '';
+        let label: ILabel = null;
 
         if (branch.condition != '')
         {
@@ -81,7 +81,7 @@ export class BranchNode extends ElementNode
         for (let child of branch.children)
             child.compile(codeGen);
 
-        if (label != '')
+        if (label != null)
         {
             codeGen.jump(endLabel);
             codeGen.emitLabel(label);

@@ -19,17 +19,24 @@ export class LoopNode extends ElementNode
         let topLabel = codeGen.createLabel();
         let endLabel = codeGen.createLabel();
 
-        let iterator = codeGen.iterate(this.binding);
+        codeGen.push();                     // Save current item
+        codeGen.load(this.binding);         // Load named iterator
+        codeGen.array();                    // Convert current item to an array.
+        codeGen.emitLabel(topLabel);        // Start of loop
 
-        codeGen.emitLabel(topLabel);
-        codeGen.jump_true(`${iterator}.length == 0`, endLabel);
-        codeGen.pushModel(`${iterator}.shift()`);
+        // Go to end if empty
+        codeGen.jump_true("this.$item.length == 0", endLabel);
+
+        codeGen.push();                     // Save iterator
+        codeGen.next();                     // Load top of array (and shift)
 
         this.compileChildren(codeGen);
 
-        codeGen.popModel();
+        codeGen.pop();                      // Restore iterator
         codeGen.jump(topLabel);
+
         codeGen.emitLabel(endLabel);
+        codeGen.pop();                      // Restore item
     }
 }
 

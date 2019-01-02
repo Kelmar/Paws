@@ -12,6 +12,15 @@ interface ICodeOutput
 
 /* ================================================================================================================= */
 
+/**
+ * Opaque type for labels in our virtual machine.
+ */
+export interface ILabel
+{
+}
+
+/* ================================================================================================================= */
+
 export class ConsoleOutput implements ICodeOutput
 {
     public write(text: string): void
@@ -28,45 +37,38 @@ export class ElementManipulator
     {
     }
 
-    public writeHeader()
-    {
-        this.output.write('let $__tag_stack = [];');
-    }
-
     public push(tagName: string): void
     {
         tagName = tagName.escapeJS();
 
-        this.output.write(`$element = $__tag_stack.push(document.createElement("${tagName}"));`);
+        this.output.write(`this.push_tag("${tagName}");`);
     }
 
     public pop(): void
     {
-        this.output.write(`$__e = $__tag_stack.pop();
-if ($__e) $__e.appendChild($element);
-$element = $__e;`);
+        this.output.write("this.pop_tag();");
     }
 
     public addClasses(classes: string[]): void
     {
         let classList = classes.map(x => x.escapeJS()).join('", "');
-        this.output.write(`$element.classList.add("${classList}")`);
+        this.output.write(`this.add_classes("${classList}");`);
     }
 
     public removeClasses(classes: string[]): void
     {
         let classList = classes.map(x => x.escapeJS()).join('", "');
-        this.output.write(`$element.classList.remove("${classList}")`);
+        this.output.write(`this.rem_classes("${classList}")`);
     }
 
     public setAttribute(name: string, value: string, isStatic: boolean)
     {
-        name = name.escapeJS();
-
         if (isStatic)
             value = "'" + value.escapeJS() + "'";
+        else
+            value = "this.$item." + value;
 
-        this.output.write(`$element.setAttribute('${name}', ${value});`);
+        this.output.write(`this.set_attr('${name}', ${value});`);
     }
 
     public appendText(text: string, isStatic :boolean, escape: boolean)
@@ -81,11 +83,18 @@ $element = $__e;`);
                     .escapeHTML();
             }
 
-            this.output.write(`$element.innerHTML += '${text}';`);
+            this.output.write(`this.add_html('${text}');`);
         }
         else
-            this.output.write(`$element.innterHTML += ${text}` + (escape ? '.escapeHTML();' : ';'));
+            this.output.write(`this.add_html(this.$item.${text}` + (escape ? '.escapeHTML());' : ');'));
     }
+}
+
+/* ================================================================================================================= */
+
+class Label implements ILabel
+{
+    constructor(readonly value: string) {}
 }
 
 /* ================================================================================================================= */
@@ -95,7 +104,6 @@ export class CodeGenerator
     public readonly element: ElementManipulator;
 
     private m_labelId: number = 0;
-    private m_iteratorId: number = 0;
 
     constructor(readonly output: ICodeOutput)
     {
@@ -104,63 +112,68 @@ export class CodeGenerator
 
     public writeHeader()
     {
-        this.output.write(`function render($item) {
-    let $__item_stack = [];
-with ($item) {`);
+        this.output.write(`function render($item) {`);
     }
 
     public writeFooter()
     {
-        this.output.write('}}');
+        this.output.write('}');
     }
 
-    public pushModel(name: string): void
+    public push(): void
     {
-        this.output.write(`$item = $__item_stack.push(${name});
-with ($item) {`);
+        this.output.write("this.push_model();");
     }
 
-    public popModel()
+    public load(name: string)
     {
-        this.output.write(`}
-$item = $__item_stack.pop();`);
+        this.output.write(`this.$item = this.$item.${name};`);
     }
 
-    public createLabel(): string
+    public array()
+    {
+        this.output.write("this.$item = Array.from(this.$item);");
+    }
+
+    public next()
+    {
+        this.output.write("this.$item = this.$item.shift();");
+    }
+
+    public pop()
+    {
+        this.output.write(`this.pop_model();`);
+    }
+
+    public createLabel(): ILabel
     {
         let rval = '__lab_' + this.m_labelId;
         ++this.m_labelId;
-        return rval;
+        return new Label(rval);
     }
 
-    public iterate(name: string): string
+    public emitLabel(label: ILabel)
     {
-        let iterator: string = '__it' + this.m_iteratorId;
-        ++this.m_iteratorId;
-
-        this.output.write(`let ${iterator} = Array.from(${name});`);
-
-        return iterator;
+        let l = label as Label;
+        this.output.write(`[lbl] ${l.value}:`);
     }
 
-    public emitLabel(label: string)
+    public jump(label: ILabel)
     {
-        this.output.write(`[lbl] ${label}:`);
+        let l = label as Label;
+        this.output.write(`goto ${l.value};`);
     }
 
-    public jump(label: string)
+    public jump_true(condition: string, trueLabel: ILabel)
     {
-        this.output.write(`goto ${label};`);
+        let l = trueLabel as Label;
+        this.output.write(`if (this.$item.${condition}) goto ${l.value};`);
     }
 
-    public jump_true(condition: string, trueLabel: string)
+    public jump_false(condition: string, falseLabel: ILabel)
     {
-        this.output.write(`if (${condition}) goto ${trueLabel};`);
-    }
-
-    public jump_false(condition: string, falseLabel: string)
-    {
-        this.output.write(`if (!(${condition})) goto ${falseLabel};`);
+        let l = falseLabel as Label;
+        this.output.write(`if (!(this.$item.${condition})) goto ${l.value};`);
     }
 }
 
