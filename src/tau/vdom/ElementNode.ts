@@ -42,7 +42,7 @@ export class ElementNode extends AstNode
         codeGen.pushTag(this.tagName);
 
         for (let attr of this.m_attributes)
-            codeGen.addAttribute(attr.name, attr.value);
+            codeGen.addAttribute(attr.name, attr.value, attr.isStatic);
 
         this.innerCompile(codeGen);
 

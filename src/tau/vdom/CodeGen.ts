@@ -75,12 +75,14 @@ if ($__e) $__e.appendChild($element);
 $element = $__e;`);
     }
 
-    public addAttribute(name: string, value: string)
+    public addAttribute(name: string, value: string, isStatic: boolean)
     {
         name = this.escapeStringJS(name);
-        value = this.escapeStringJS(value);
 
-        this.output.write(`$element.setAttribute('${name}', '${value}');`);
+        if (isStatic)
+            value = "'" + this.escapeStringJS(value) + "'";
+
+        this.output.write(`$element.setAttribute('${name}', ${value});`);
     }
 
     public appendText(text: string)
