@@ -93,17 +93,22 @@ export class Parser
 
     private m_state: IParserState;
 
+    /**
+     * Prases an HTML DOM tree for nodes that need to be databound.
+     * 
+     * @returns An abstract syntax tree that can be compiled to a DOM generator.
+     */
+    public parse(root: Element): ast.AstNode
+    {
+        return this.parseElement(root);
+    }
+
     private asCurrent(state: IParserState): IDisposable
     {
         let prev = this.m_state;
         this.m_state = state;
 
         return { dispose: () => { this.m_state = prev; } };
-    }
-
-    public parse(root: Element): ast.AstNode
-    {
-        return this.parseElement(root);
     }
 
     private parseChildren(node: Element): void
