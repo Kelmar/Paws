@@ -21,6 +21,7 @@ export class ConsoleOutput implements ICodeOutput
 export class CodeGenerator
 {
     private m_labelId: number = 0;
+    private m_iteratorId: number = 0;
 
     constructor(readonly output: ICodeOutput)
     {
@@ -100,6 +101,16 @@ $item = $__item_stack.pop();`);
         let rval = '__lab_' + this.m_labelId;
         ++this.m_labelId;
         return rval;
+    }
+
+    public iterate(name: string): string
+    {
+        let iterator: string = '__it' + this.m_iteratorId;
+        ++this.m_iteratorId;
+
+        this.output.write(`let ${iterator} = Array.from(${name});`);
+
+        return iterator;
     }
 
     public emitLabel(label: string)
