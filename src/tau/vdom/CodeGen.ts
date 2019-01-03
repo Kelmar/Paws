@@ -6,6 +6,8 @@ import '../../common/string';
 import { ICodeOutput } from "./CodeOutput";
 import { IDisposable } from 'lepton';
 
+import * as ast from './astree';
+
 /* ================================================================================================================= */
 
 /**
@@ -189,6 +191,116 @@ export class CodeGenerator implements IDisposable
     {
         let l = falseLabel as Label;
         this.output.write(`if (!(this.$item.${condition})) continue ${l.value};`);
+    }
+}
+
+/* ================================================================================================================= */
+
+export class CompilePass extends ast.Visitor
+{
+    constructor(readonly codeGen: CodeGenerator)
+    {
+        super();
+    }
+
+    protected walkChildren(node: ast.AstNode): void
+    {
+        node.forEach(c => c.receive(this));
+    }
+
+    protected compileBranch(branch: ast.Branch, first: boolean): void
+    {
+        if (first)
+            this.codeGen.emitIf(branch.condition);
+        else
+        {
+            if (branch.condition)
+                this.codeGen.emitElse(branch.condition);
+            else
+                this.codeGen.emitElse();
+        }
+
+        for (let child of branch.children)
+            child.receive(this);
+    }
+
+    public visitBranchNode(node: ast.BranchNode): void 
+    {
+        let first = true;
+
+        for (let branch of node.branches)
+        {
+            this.compileBranch(branch, first);
+
+            if (first)
+                first = false;
+        }
+
+        this.codeGen.emitEnd();
+    }
+    
+    public visitLoopNode(node: ast.LoopNode): void 
+    {
+        this.codeGen.push();                     // Save current item
+        this.codeGen.load(node.binding);         // Load named iterator
+        this.codeGen.array();                    // Convert current item to an array.
+
+        this.codeGen.emitLoop("length != 0");
+
+        this.codeGen.push();                     // Save iterator
+        this.codeGen.next();                     // Load top of array (and shift)
+
+        this.walkChildren(node);
+
+        this.codeGen.pop();                      // Restore iterator
+        this.codeGen.emitEnd();
+
+        this.codeGen.pop();                      // Restore item
+    }
+
+    public visitClassAttributeNode(node: ast.ClassAttributeNode): void 
+    {
+        let classes = node.classNames;
+
+        if (classes.length == 0)
+            this.codeGen.element.setAttribute(node.value, 'class', false);
+        else
+        {
+            this.codeGen.emitIf(node.value);
+            this.codeGen.element.addClasses(classes);
+            this.codeGen.emitElse();
+            this.codeGen.element.removeClasses(classes);
+            this.codeGen.emitEnd();
+        }
+    }
+
+    public visitTextAttributeNode(node: ast.TextAttributeNode): void 
+    {
+        this.codeGen.element.appendText(node.value, false, true);
+    }
+
+    public visitHtmlAttributeNode(node: ast.HtmlAttributeNode): void 
+    {
+        this.codeGen.element.appendText(node.value, false, false);
+    }
+
+    public visitGenericAttributeNode(node: ast.GenericAttributeNode): void 
+    {
+        this.codeGen.element.setAttribute(node.name, node.value, node.isStatic);
+    }
+
+    public visitElementNode(node: ast.ElementNode): void 
+    {
+        this.codeGen.element.push(node.tagName);
+
+        this.walkChildren(node);
+
+        this.codeGen.element.pop();
+    }
+
+    public visitTextNode(node: ast.TextNode): void
+    {
+        this.codeGen.element.appendText(node.text, true, true);
     }
 }
 

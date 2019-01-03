@@ -3,6 +3,7 @@
 
 import { AttributeNode } from './AttributeNode';
 import { CodeGenerator } from '../CodeGen';
+import { Visitor } from './Visitor';
 
 /* ================================================================================================================= */
 
@@ -13,9 +14,9 @@ export class TextAttributeNode extends AttributeNode
         super();
     }
 
-    public compile(codeGen: CodeGenerator): void
+    public receive(visitor: Visitor): void
     {
-        codeGen.element.appendText(this.value, false, true);
+        visitor.visitTextAttributeNode(this);
     }
 }
 

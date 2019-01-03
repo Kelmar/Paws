@@ -3,6 +3,7 @@
 
 import { AstNode } from "./AstNode";
 import { CodeGenerator } from "../CodeGen";
+import { Visitor } from "./Visitor";
 
 /* ================================================================================================================= */
 
@@ -12,10 +13,10 @@ export class TextNode extends AstNode
     {
         super();
     }
-
-    public compile(codeGen: CodeGenerator): void
+    
+    public receive(visitor: Visitor)
     {
-        codeGen.element.appendText(this.text, true, true);
+        visitor.visitTextNode(this);
     }
 }
 

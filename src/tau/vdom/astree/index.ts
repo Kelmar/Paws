@@ -16,4 +16,6 @@ export * from './BranchNode';
 export * from './LoopNode';
 export * from './TextNode';
 
+export * from './Visitor';
+
 /* ================================================================================================================= */

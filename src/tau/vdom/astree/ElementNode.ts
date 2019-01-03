@@ -3,6 +3,7 @@
 
 import { AstNode } from "./AstNode";
 import { CodeGenerator } from "../CodeGen";
+import { Visitor } from "./Visitor";
 
 /* ================================================================================================================= */
 
@@ -12,19 +13,10 @@ export class ElementNode extends AstNode
     {
         super();
     }
-
-    protected innerCompile(codeGen: CodeGenerator): void
+    
+    public receive(visitor: Visitor): void
     {
-        this.compileChildren(codeGen);
-    }
-
-    public compile(codeGen: CodeGenerator): void
-    {
-        codeGen.element.push(this.tagName);
-
-        this.innerCompile(codeGen);
-
-        codeGen.element.pop();
+        visitor.visitElementNode(this);
     }
 }
 

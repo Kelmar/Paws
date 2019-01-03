@@ -4,6 +4,7 @@
 import { AstNode } from "./AstNode";
 import { ElementNode } from "./ElementNode";
 import { CodeGenerator, ILabel } from "../CodeGen";
+import { Visitor } from "./Visitor";
 
 /* ================================================================================================================= */
 /**
@@ -53,7 +54,8 @@ export class Branch
 
 export class BranchNode extends ElementNode
 {
-    private readonly m_branches: Branch[] = [];
+    public readonly branches: Branch[] = [];
+
     private m_currentBranch: Branch = null;
 
     public get currentBranch(): Branch
@@ -64,39 +66,13 @@ export class BranchNode extends ElementNode
     public addBranch(condition: string, invert?: boolean): Branch
     {
         let rval = new Branch(condition, invert);
-        this.m_branches.push(rval);
+        this.branches.push(rval);
         return rval;
     }
 
-    protected compileBranch(codeGen: CodeGenerator, branch: Branch, first: boolean): void
+    public receive(visitor: Visitor): void
     {
-        if (first)
-            codeGen.emitIf(branch.condition);
-        else
-        {
-            if (branch.condition)
-                codeGen.emitElse(branch.condition);
-            else
-                codeGen.emitElse();
-        }
-
-        for (let child of branch.children)
-            child.compile(codeGen);
-    }
-
-    protected innerCompile(codeGen: CodeGenerator): void
-    {
-        let first = true;
-
-        for (let branch of this.m_branches)
-        {
-            this.compileBranch(codeGen, branch, first);
-
-            if (first)
-                first = false;
-        }
-
-        codeGen.emitEnd();
+        visitor.visitBranchNode(this);
     }
 }
 

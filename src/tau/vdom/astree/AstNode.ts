@@ -3,6 +3,7 @@
 
 import { LinkedList } from "../../../lepton";
 import { CodeGenerator } from "../CodeGen";
+import { Visitor } from "./Visitor";
 
 /* ================================================================================================================= */
 
@@ -27,12 +28,7 @@ export abstract class AstNode
             callback(node);
     }
 
-    protected compileChildren(codeGen: CodeGenerator): void
-    {
-        this.forEach(c => c.compile(codeGen));
-    }
-
-    public abstract compile(codeGen: CodeGenerator): void;
+    public abstract receive(visitor: Visitor): void;
 }
 
 /* ================================================================================================================= */

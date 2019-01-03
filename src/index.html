@@ -62,7 +62,7 @@
 
     <script type="text/javascript">
         const { using } = require('./lepton/lifecycle');
-        const { Parser, CodeGenerator, StringOutput } = require('./tau/vdom');
+        const { Parser, CodeGenerator, CompilePass, StringOutput } = require('./tau/vdom');
         const { Renderer } = require('./tau/renderer');
 
         let el = document.getElementById('test3');
@@ -75,7 +75,8 @@
         {
             using (new CodeGenerator(out), codeGen =>
             {
-                root.compile(codeGen);
+                let comp = new CompilePass(codeGen);
+                root.receive(comp);
             });
 
             //comp = eval(out.toString());
