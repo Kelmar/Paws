@@ -19,40 +19,41 @@ export class Renderer
 
     public execute(model: any, fn: Function): void
     {
-        fn.apply(this, model);
+        this.$item = model;
+        
+        fn.apply(this);
 
         if (this.$element != null)
             this.parent.appendChild(this.$element);
     }
 
-    protected push_model(value: any): void
+    protected push_model(): void
     {
         this.__m_modelStack.push(this.$item);
-        this.$item = value;
     }
 
-    protected pop_model(): any
+    protected pop_model(): void
     {
-        return this.__m_modelStack.pop();
+        this.$item = this.__m_modelStack.pop();
     }
 
-    protected push_tag(tagName: string): HTMLElement
+    protected push_tag(tagName: string): void
     {
-        let rval = document.createElement(tagName);
-        this.__m_tagStack.push(rval);
-        this.$element = rval;
-        return rval;
+        if (this.$element != null)
+            this.__m_tagStack.push(this.$element);
+
+        this.$element = document.createElement(tagName);
     }
 
-    protected pop_tag(): HTMLElement
+    protected pop_tag(): void
     {
         let e = this.__m_tagStack.pop();
 
         if (e && this.$element != null)
+        {
             e.appendChild(this.$element);
-
-        this.$element = e;
-        return this.$element;
+            this.$element = e;
+        }
     }
 
     protected add_classes(...classes: string[])

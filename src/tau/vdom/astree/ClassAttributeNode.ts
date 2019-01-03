@@ -26,15 +26,11 @@ export class ClassAttributeNode extends AttributeNode
             codeGen.element.setAttribute(this.value, 'class', false);
         else
         {
-            let unsetLabel = codeGen.createLabel();
-            let endLabel = codeGen.createLabel();
-
-            codeGen.jump_false(this.value, unsetLabel);
+            codeGen.emitIf(this.value);
             codeGen.element.addClasses(classes);
-            codeGen.jump(endLabel);
-            codeGen.emitLabel(unsetLabel);
+            codeGen.emitElse();
             codeGen.element.removeClasses(classes);
-            codeGen.emitLabel(endLabel);
+            codeGen.emitEnd();
         }
     }
 }

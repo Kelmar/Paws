@@ -68,7 +68,7 @@
         let el = document.getElementById('test3');
         let p = new Parser();
         let root = p.parse(el);
-        let { render } = require('../sandbox/render');
+        //let { render } = require('../sandbox/render');
 
         /*
         using (new StringOutput(), out =>
@@ -83,13 +83,14 @@
             console.log(out.toString());
         });
         */
-        
+
         let parent = el.parentElement;
         parent.removeChild(el);
 
         let model = { 
             on: true, 
             name: 'It',
+            class: 'bold',
             items: [
                 { id: 1, name: "Bugs Bunny" },
                 { id: 2, name: "Daffy Duck" },
@@ -97,8 +98,8 @@
             ]
         };
 
-        let r = new Renderer();
-        r.execute(model, render);
+        //let r = new Renderer(parent);
+        //r.execute(model, render);
 
         //const { IPC } = require('./backend/IpcTransport');
         //const { Transport } = require('./backend/Transport');

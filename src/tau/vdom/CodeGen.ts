@@ -104,7 +104,7 @@ export class CodeGenerator implements IDisposable
 
     public writeHeader(): void
     {
-        this.output.write(`function render($item) {`);
+        this.output.write(`function render() {`);
     }
 
     public writeFooter(): void
@@ -144,10 +144,33 @@ export class CodeGenerator implements IDisposable
         return new Label(rval);
     }
 
+    public emitIf(test: string)
+    {
+        this.output.write(`if (this.$item.${test}) {`);
+    }
+
+    public emitElse(test?: string)
+    {
+        if (test != null)
+            this.output.write(`} else if (this.$item.${test}) {`);
+        else
+            this.output.write('} else {');
+    }
+
+    public emitEnd()
+    {
+        this.output.write('}');
+    }
+
     public emitLabel(label: ILabel): void
     {
         let l = label as Label;
         this.output.write(`${l.value}:`);
+    }
+
+    public emitLoop(test: string)
+    {
+        this.output.write(`while (this.$item.${test}) {`);
     }
 
     public jump(label: ILabel): void

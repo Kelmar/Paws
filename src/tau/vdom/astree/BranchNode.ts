@@ -68,34 +68,35 @@ export class BranchNode extends ElementNode
         return rval;
     }
 
-    protected compileBranch(codeGen: CodeGenerator, branch: Branch, endLabel: ILabel)
+    protected compileBranch(codeGen: CodeGenerator, branch: Branch, first: boolean): void
     {
-        let label: ILabel = null;
-
-        if (branch.condition != '')
+        if (first)
+            codeGen.emitIf(branch.condition);
+        else
         {
-            label = codeGen.createLabel();
-            codeGen.jump_false(branch.condition, label);
+            if (branch.condition)
+                codeGen.emitElse(branch.condition);
+            else
+                codeGen.emitElse();
         }
 
         for (let child of branch.children)
             child.compile(codeGen);
-
-        if (label != null)
-        {
-            codeGen.jump(endLabel);
-            codeGen.emitLabel(label);
-        }
     }
 
     protected innerCompile(codeGen: CodeGenerator): void
     {
-        let endLabel = codeGen.createLabel();
+        let first = true;
 
         for (let branch of this.m_branches)
-            this.compileBranch(codeGen, branch, endLabel);
+        {
+            this.compileBranch(codeGen, branch, first);
 
-        codeGen.emitLabel(endLabel);
+            if (first)
+                first = false;
+        }
+
+        codeGen.emitEnd();
     }
 }
 
