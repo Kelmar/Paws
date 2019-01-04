@@ -73,13 +73,8 @@
         /*
         using (new StringOutput(), out =>
         {
-            using (new CodeGenerator(out), codeGen =>
-            {
-                let comp = new CompilePass(codeGen);
-                root.receive(comp);
-            });
-
-            //comp = eval(out.toString());
+            let comp = new CompilePass(out);
+            root.receive(comp);
 
             console.log(out.toString());
         });
