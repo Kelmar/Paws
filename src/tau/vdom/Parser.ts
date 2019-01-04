@@ -1,8 +1,10 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IDisposable, using, LinkedList } from "../../lepton";
+import { IDisposable, using } from "../../lepton";
 import { ILogger, LogManager } from "../../common/logging";
+
+import { LinkedList } from "../common";
 
 import './utils';
 

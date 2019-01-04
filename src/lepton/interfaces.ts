@@ -10,6 +10,8 @@ export interface Type<T>
     new(...args: any[]): T;
 }
 
+/* ================================================================================================================= */
+
 /**
  * Mechanism for releasing resources.
  */
@@ -21,12 +23,16 @@ export interface IDisposable
     dispose(): void;
 }
 
+/* ================================================================================================================= */
+
 export interface IRegistrationSyntax
 {
     to<T>(type: Type<T>): IRegistrationSyntax;
 
     with(lifetime: Lifetime): IRegistrationSyntax;
 }
+
+/* ================================================================================================================= */
 
 /**
  * Mechanism for resolving object dependency graphs.
@@ -62,6 +68,8 @@ export interface IResolver
     resolve<T>(name: symbol): T;
 }
 
+/* ================================================================================================================= */
+
 export interface IContainer extends IDisposable
 {
     register(name: symbol): IRegistrationSyntax;
@@ -73,6 +81,8 @@ export interface IContainer extends IDisposable
      */
     beginScope(): IScope;
 }
+
+/* ================================================================================================================= */
 
 /**
  * Defines the boundaries of a scoped lifetime.
