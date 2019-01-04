@@ -3,7 +3,6 @@
 
 import { Writable } from 'stream';
 import { IDisposable } from 'lepton';
-import { buffer } from 'rxjs/operators';
 
 /* ================================================================================================================= */
 
