@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from "electron";
-import { IDisposable } from "./lepton";
+import { IDisposable } from "lepton-di";
 
 export default class Application implements IDisposable
 {

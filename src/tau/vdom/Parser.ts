@@ -1,7 +1,8 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IDisposable, using } from "../../lepton";
+import { IDisposable, using } from "lepton-di";
+
 import { ILogger, LogManager } from "../../common/logging";
 
 import { LinkedList } from "../common";

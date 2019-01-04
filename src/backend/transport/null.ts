@@ -3,9 +3,9 @@
 
 import { Observable, never } from 'rxjs';
 
-import { ConnectionState, IListener, IClient } from ".";
+import { IContainer } from 'lepton-di';
 
-import { IContainer } from '../../lepton';
+import { ConnectionState, IListener, IClient } from ".";
 
 /* ================================================================================================================= */
 

@@ -3,7 +3,8 @@
 
 import { Observable } from 'rxjs';
 
-import { IDisposable, IContainer } from "../../lepton";
+import { IDisposable, IContainer } from "lepton-di";
+
 import { IPC } from './ipc';
 import { configureNullTransport } from './null';
 

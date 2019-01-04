@@ -6,8 +6,7 @@ import Server from './backend/Server';
 
 // Force initialization of IPC transport layer.
 import { transport } from './backend/transport';
-import { Container } from './lepton/container';
-import { using } from './lepton';
+import { using, Container } from 'lepton-di';
 
 /* ================================================================================================================= */
 
