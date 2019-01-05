@@ -46,6 +46,8 @@ export default class Application implements IDisposable
             width: 800,
             height: 600,
             show: false,
+            //frame: false,
+            //titleBarStyle: 'hiddenInset',
             webPreferences: {
                 nodeIntegration: true
             }

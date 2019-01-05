@@ -10,7 +10,7 @@ export class MainWindow extends Window
     constructor()
     {
         super();
-
+        this.title = 'Paws';
         let l = new Label('Testing');
         this.add(l);
     }
