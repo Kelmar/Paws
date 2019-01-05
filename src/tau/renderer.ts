@@ -1,10 +1,6 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-
-
-/* ================================================================================================================= */
-
 export class Renderer
 {
     private __m_modelStack: any[] = [];
@@ -13,18 +9,21 @@ export class Renderer
     public $item: any;
     public $element: HTMLElement;
 
-    constructor (readonly parent: HTMLElement)
+    constructor (readonly parent: HTMLElement, readonly renderFn: Function)
     {
     }
 
-    public execute(model: any, fn: Function): void
+    public execute(model: any): void
     {
         this.$item = model;
         
-        fn.apply(this);
+        this.renderFn.apply(this);
 
         if (this.$element != null)
+        {
+            this.parent.innerHTML = '';
             this.parent.appendChild(this.$element);
+        }
     }
 
     protected push_model(): void
@@ -78,3 +77,40 @@ export class Renderer
 }
 
 /* ================================================================================================================= */
+
+import { using } from 'lepton-di';
+import { Parser, CompilePass, StringOutput } from './vdom';
+
+export function renderTest()
+{
+    let el = document.getElementById('test3');
+    let p = new Parser();
+    let root = p.parse(el);
+    let render;
+
+    using (new StringOutput(), out =>
+    {
+        let comp = new CompilePass(out);
+        root.receive(comp);
+
+        //console.log(out.toString());
+        render = new Function('//# sourceUrl=index.html\r\n' + out.toString());
+    });
+
+    let parent = el.parentElement;
+    parent.removeChild(el);
+
+    let model = { 
+        on: true, 
+        name: 'It',
+        class: 'bold',
+        items: [
+            { id: 1, name: "Bugs Bunny" },
+            { id: 2, name: "Daffy Duck" },
+            { id: 3, name: "Elmer Fudd" },
+        ]
+    };
+
+    let r = new Renderer(parent, render);
+    r.execute(model);
+}

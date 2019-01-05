@@ -2,121 +2,15 @@
 
 <html>
     <head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
         <meta charset="UTF-8" />
-        <title>Paws</title>
     </head>
 
     <body>
-        <h1>Hello World!</h1>
-
-        Now to make the rest of the application!
-        <div id="test">
-            <div>ID: <span tau-text="id"></span></div>
-            <div>Name: <span tau-text="name"></span></div>
-            <input tau-value="name" />
-            <button tau-onclick="doThing">Test</button>
-        </div>
-
-        <div t-foreach="items">
-            <span t-text="name"></span>
-        </div>
-
-        <div t-if="foo"></div>
-        <div t-unless="foo"></div>
-        <div t-with="foo"></div>
-
-        <div id="test2">
-            <t-for var="i" until="10" by="2">
-                <div>Item <span tau-text="i"></span>is<t-if is="i == 10">ten<t-else />other</t-if>.</div>
-                <t-if is="i == 10">
-                    True side of the force.
-                <t-elif is="i == 5" />
-                    Half truth side of the force.
-                <t-else />
-                    False side of the force.
-                </t-if>
-            </t-for>
-        </div>
-
-        <div id="test3">
-            <div t-if="on">
-                <span t-text="name"></span> is on.
-            <t-else />
-                <span t-text="name"></span> is off.
-            </div>
-            <h4>If tag test</h4>
-            <div t-class='compClass'>
-                <t-if is="on">
-                    <span t-text="name"></span> is on.
-                <t-else />
-                    <span t-text="name"></span> is off.
-                </t-if>
-            </div>
-            <h4 t-class-bar='bar'>For tag test</h4>
-            <ul t-for="items">
-                <li>Item <span t-html="id"></span>: <span t-html="name"></span></li>
-            </ul>
-        </div>
     </body>
 
     <script type="text/javascript">
-        const { using } = require('./lepton/lifecycle');
-        const { Parser, CodeGenerator, CompilePass, StringOutput } = require('./tau/vdom');
-        const { Renderer } = require('./tau/renderer');
-
-        let el = document.getElementById('test3');
-        let p = new Parser();
-        let root = p.parse(el);
-        //let { render } = require('../sandbox/render');
-
-        /*
-        using (new StringOutput(), out =>
-        {
-            let comp = new CompilePass(out);
-            root.receive(comp);
-
-            console.log(out.toString());
-        });
-        */
-
-        let parent = el.parentElement;
-        parent.removeChild(el);
-
-        let model = { 
-            on: true, 
-            name: 'It',
-            class: 'bold',
-            items: [
-                { id: 1, name: "Bugs Bunny" },
-                { id: 2, name: "Daffy Duck" },
-                { id: 3, name: "Elmer Fudd" },
-            ]
-        };
-
-        //let r = new Renderer(parent);
-        //r.execute(model, render);
-
-        //const { IPC } = require('./backend/IpcTransport');
-        //const { Transport } = require('./backend/Transport');
-
-        //IPC.init();
-
-        /*
-        const { BindingParser2 } = require('./tau/parser');
-        const { makeDynamic } = require('./tau/models');
-
-        const { Template } = require('./tau/Template');
-        const Component = require('./tau/Component');
-
-        let comp = new Component.Component(new Template({ selector: '#test' }), Component.Widget);
-        comp.model.id = 5;
-        comp.model.name = "John Doe";
-
-        let p = new BindingParser2();
-        let el = document.getElementById('test3');
-        let vn = p.parse(el);
-        
-        */
+        const { Window } = require('./tau/ui');
+        Window.bootstrap();
     </script>
 </html>

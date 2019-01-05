@@ -1,5 +1,9 @@
 import { app, BrowserWindow, ipcMain } from "electron";
+import * as url from "url";
+
 import { IDisposable } from "lepton-di";
+
+import { WindowOptions } from 'tau/ui/Window';
 
 export default class Application implements IDisposable
 {
@@ -46,8 +50,20 @@ export default class Application implements IDisposable
                 nodeIntegration: true
             }
         });
+        
+        let options: WindowOptions = {
+            className: 'MainWindow',
+            fileName: `${__dirname}/MainWindow`
+        };
 
-        this.window.loadFile(`${__dirname}/index.html`);
+        let loc = url.format({
+            protocol: 'file',
+            pathname: `${__dirname}/index.html`,
+            slashes: true,
+            hash: encodeURIComponent(JSON.stringify(options))
+        });
+
+        this.window.loadURL(loc);
 
         this.window.on('close', () =>
         {
