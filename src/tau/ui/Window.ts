@@ -3,29 +3,22 @@
 
 import { IDisposable } from "lepton-di";
 
-import * as domUtils from "./DomUtils";
-
 import { Control } from "./Control";
+import { WindowFrame, FrameOptions } from "./WindowFrame";
 
 /* ================================================================================================================= */
 
-export class WindowContainer extends Control
+export interface WindowOptions
 {
-    constructor()
-    {
-        super();
-        this.create(); // Force early creation.
-    }
-
-    protected build(): HTMLElement
-    {
-        return domUtils.findOrCreateTag('BODY');
-    }
+    fileName: string;
+    initClass?: string;
+    windowClass: string;
 }
 
 /* ================================================================================================================= */
 
 let g_self: Window = null;
+let g_init: any = null;
 
 function readOptions(): WindowOptions
 {
@@ -40,6 +33,9 @@ function bootstrapMain()
 
     const ext: any = require(options.fileName);
 
+    if (options.initClass)
+        g_init = new ext[options.initClass];
+
     let ev: IDisposable[] = [];
 
     function continueLoad()
@@ -49,8 +45,8 @@ function bootstrapMain()
 
         ev = null;
 
-        console.log(`Loading ${options.className}`);
-        g_self = new ext[options.className];
+        console.log(`Loading ${options.windowClass}`);
+        g_self = new ext[options.windowClass];
     }
 
     ev.push(document.listen('DOMContentLoaded', continueLoad));
@@ -61,28 +57,36 @@ function bootstrapMain()
 
 export abstract class Window implements IDisposable
 {
-    private m_body: WindowContainer
+    private m_frame: WindowFrame
 
-    protected constructor()
+    protected constructor(frameOptions?: FrameOptions)
     {
         window.listen("close", () => this.closed());
 
-        this.m_body = new WindowContainer();
+        this.m_frame = new WindowFrame(frameOptions);
     }
 
     public dispose(): void
     {
-        this.m_body.dispose();
+        this.m_frame.dispose();
+
+        this.m_frame = null;
+        g_self = null;
+
+        if (typeof g_init['dispose'] === 'function')
+            g_init['dispose']();
+
+        g_init = null;
     }
 
     public get title(): string
     {
-        return document.title;
+        return this.m_frame.title;
     }
 
     public set title(value :string)
     {
-        document.title = value;
+        this.m_frame.title = value;
     }
 
     private closed(): void
@@ -92,26 +96,18 @@ export abstract class Window implements IDisposable
 
     public add(child: Control): void
     {
-        this.m_body.add(child);
+        this.m_frame.add(child);
     }
 
     public remove(child: Control): void
     {
-        this.m_body.remove(child);
+        this.m_frame.remove(child);
     }
 
     public static bootstrap(): void
     {
         bootstrapMain();
     }
-}
-
-/* ================================================================================================================= */
-
-export interface WindowOptions
-{
-    className: string;
-    fileName: string;
 }
 
 /* ================================================================================================================= */

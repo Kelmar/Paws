@@ -5,16 +5,26 @@ import { Control } from "./Control";
 
 /* ================================================================================================================= */
 
-export class Button extends Control
+export class TitleBar extends Control
 {
     constructor()
     {
-        super();
+        super()
     }
 
-    protected build(): HTMLElement
+    public get title(): string
     {
-        return document.createElement('BUTTON');
+        return this.element.innerText;
+    }
+
+    public set title(value: string)
+    {
+        this.element.innerText = value;
+    }
+
+    protected render(): void
+    {
+        this.element.classList.add('titlebar');
     }
 }
 

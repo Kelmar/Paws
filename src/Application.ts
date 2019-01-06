@@ -54,7 +54,7 @@ export default class Application implements IDisposable
         });
         
         let options: WindowOptions = {
-            className: 'MainWindow',
+            windowClass: 'MainWindow',
             fileName: `${__dirname}/MainWindow`
         };
 

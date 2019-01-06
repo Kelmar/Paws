@@ -97,11 +97,6 @@ export abstract class Control implements IDisposable
 
     // Implementation
 
-    protected build(): HTMLElement
-    {
-        return document.createElement('DIV');
-    }
-
     protected forEach(cb: (c: Control) => void): void
     {
         for (let c of this.m_children)
@@ -115,7 +110,7 @@ export abstract class Control implements IDisposable
             child.m_parent = this;
             this.m_children.push(child);
         }
-        else if (child.m_parent !== this )
+        else if (child.m_parent !== this)
         {
             throw new Error('Child belongs to another parent!');
         }
@@ -152,6 +147,15 @@ export abstract class Control implements IDisposable
             this.m_parent.m_element.appendChild(this.m_element);
     }
 
+    protected render()
+    {
+    }
+
+    protected build(): HTMLElement
+    {
+        return document.createElement('DIV');
+    }
+
     protected create(): void
     {
         if (this.m_element)
@@ -159,6 +163,8 @@ export abstract class Control implements IDisposable
 
         this.m_element = this.build();
         tagElement(this.m_element, this);
+
+        this.render();
 
         this.forEach(c => c.updateParentElement());
     }
