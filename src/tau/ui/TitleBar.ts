@@ -2,7 +2,7 @@
 /* ================================================================================================================= */
 
 import { mapTo, mergeMap, tap, } from "rxjs/operators";
-import { Observable, from, merge, iif, of } from "rxjs";
+import { Observable, from, merge, iif, of, never } from "rxjs";
 
 import { Control } from "./Control";
 import { Label } from "./Label";
@@ -27,14 +27,17 @@ export class TitleBar extends Control
 
         this.m_label = new Label();
 
-        if (process.platform == 'win32')
+        if (process.platform != 'darwin')
         {
             this.addMenuBar();
             this.add(this.m_label);
             this.addControlButtons();
         }
         else
+        {
             this.add(this.m_label);
+            this.m_windowEvent$ = never();
+        }
     }
 
     public get isMaximized(): boolean

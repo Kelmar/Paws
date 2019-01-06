@@ -65,9 +65,7 @@ export class WindowFrame extends Control
 
     public set title(value: string)
     {
-        if (this.m_titleBar)
-            this.m_titleBar.title = value;
-
+        this.m_titleBar.title = value;
         document.title = value;
     }
 
