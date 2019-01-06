@@ -25,7 +25,7 @@ export class WindowFrame extends Control
 
     constructor(options?: FrameOptions)
     {
-        super();
+        super({ element: domUtils.findOrCreateTag('BODY') });
 
         options = {...defaultOptions, ...options};
 
@@ -34,8 +34,6 @@ export class WindowFrame extends Control
             this.m_titleBar = new TitleBar();
             super.add(this.m_titleBar);
         }
-
-        this.create(); // Force early creation.
     }
 
     public get title(): string
@@ -49,11 +47,6 @@ export class WindowFrame extends Control
             this.m_titleBar.title = value;
 
         document.title = value;
-    }
-
-    protected build(): HTMLElement
-    {
-        return domUtils.findOrCreateTag('BODY');
     }
 }
 

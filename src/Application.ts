@@ -76,6 +76,8 @@ export default class Application implements IDisposable
         this.window.on('ready-to-show', () =>
         {
             this.window.show();
+
+            //this.window.webContents.toggleDevTools();
         })
     }
 

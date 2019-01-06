@@ -7,6 +7,36 @@ import { LinkedList } from "../common";
 
 /* ================================================================================================================= */
 
+export interface ControlOptions
+{
+    element?: HTMLElement;
+    tagName?: string;
+    id?: string;
+}
+
+const DEFAULT_CONTROL_OPTIONS: ControlOptions = {
+    tagName: 'DIV'
+}
+
+/* ================================================================================================================= */
+
+export interface ListenOptions
+{
+    useCapture?: boolean;
+    allowDefault?: boolean;
+    allowBubble?: boolean;
+    callback?: (e: any) => void;
+}
+
+const DEFAULT_LISTEN_OPTIONS: ListenOptions = {
+    useCapture: false,
+    allowDefault: false,
+    allowBubble: false,
+    callback: null
+}
+
+/* ================================================================================================================= */
+
 const CONTROL_TAG: unique symbol = Symbol('tau:control');
 
 /**
@@ -28,19 +58,46 @@ export abstract class Control implements IDisposable
 {
     // Private properites
 
+    private m_listeners: Map<string, IDisposable> = new Map();
     private m_element: HTMLElement;
     private m_children: LinkedList<Control> = new LinkedList();
     private m_parent: Control;
 
     // Constructor/Destructor
 
-    protected constructor()
+    protected constructor(options?: ControlOptions)
     {
+        options = Object.assign({}, DEFAULT_CONTROL_OPTIONS, options);
+
+        this.m_element = (options.element != null) ? options.element : document.createElement(options.tagName);
+
+        tagElement(this.m_element, this);
+
+        if (options.id)
+            this.m_element.setAttribute('id', options.id);
     }
 
     public dispose(): void
     {
-        this.destroy();
+        if (this.m_element)
+        {
+            if (this.m_element.parentElement != null && this.m_element.isConnected)
+            {
+                // Pull ourselves out of the DOM as early as we can to keep things speedy.
+                this.m_element.parentElement.removeChild(this.m_element);
+            }
+
+            this.forEach(c => c.dispose());
+
+            for (let listener of this.m_listeners)
+                listener[1].dispose();
+
+            this.m_listeners.clear();
+
+            tagElement(this.m_element, null);
+            this.m_element = null;
+        }
+
         this.m_children.clear();
     }
 
@@ -48,7 +105,6 @@ export abstract class Control implements IDisposable
 
     protected get element(): HTMLElement
     {
-        this.create();
         return this.m_element;
     }
 
@@ -97,6 +153,43 @@ export abstract class Control implements IDisposable
 
     // Implementation
 
+    private stopEvent(e: any, options: ListenOptions): void
+    {
+        if (!options.allowBubble)
+        {
+            if (e.stopPropagation)
+                e.stopPropagation();
+
+            e.cancelBubble = true;
+        }
+
+        if (!options.allowDefault)
+        {
+            if (e.preventDefault)
+                e.preventDefault();
+
+            e.returnValue = false;
+        }
+    }
+
+    protected listen(type: string, options?: ListenOptions): void
+    {
+        if (this.m_listeners.has(type))
+            return;
+
+        options = Object.assign({}, DEFAULT_LISTEN_OPTIONS, options);
+
+        if (options.callback == null)
+            options.callback = (this as any)[type];
+
+        let handle = this.m_element.listen(type, e => {
+            this.stopEvent(e, options);
+            options.callback(e);
+        }, options.useCapture);
+
+        this.m_listeners.set(type, handle);
+    }
+
     protected forEach(cb: (c: Control) => void): void
     {
         for (let c of this.m_children)
@@ -109,13 +202,21 @@ export abstract class Control implements IDisposable
         {
             child.m_parent = this;
             this.m_children.push(child);
+
+            if (child.m_element.parentElement !== this.m_element)
+            {
+                if (child.m_element.parentElement != null)
+                    child.m_element.parentElement.removeChild(child.m_element);
+
+                this.m_element.appendChild(child.m_element);
+            }
         }
         else if (child.m_parent !== this)
         {
             throw new Error('Child belongs to another parent!');
         }
 
-        child.updateParentElement();
+        child.update();
     }
 
     public remove(child: Control): void
@@ -133,51 +234,18 @@ export abstract class Control implements IDisposable
             this.m_element.removeChild(child.m_element);
     }
 
-    private updateParentElement()
+    public addClass(className: string): void
     {
-        if (this.m_parent.m_element == null)
-            return;
-
-        this.create();
-
-        if (this.m_element.parentElement != null && this.m_element.parentElement !== this.m_parent.m_element)
-            this.m_element.parentElement.removeChild(this.m_element);
-
-        if (this.m_element.parentElement == null)
-            this.m_parent.m_element.appendChild(this.m_element);
+        this.m_element.classList.add(className);
     }
 
-    protected render()
+    public removeClass(className: string): void
     {
+        this.m_element.classList.remove(className);
     }
 
-    protected build(): HTMLElement
+    protected update()
     {
-        return document.createElement('DIV');
-    }
-
-    protected create(): void
-    {
-        if (this.m_element)
-            return;
-
-        this.m_element = this.build();
-        tagElement(this.m_element, this);
-
-        this.render();
-
-        this.forEach(c => c.updateParentElement());
-    }
-
-    private destroy(): void
-    {
-        if (this.m_element)
-        {
-            this.forEach(c => c.destroy());
-
-            tagElement(this.m_element, null);
-            this.m_element = null;
-        }
     }
 }
 

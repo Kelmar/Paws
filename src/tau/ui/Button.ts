@@ -1,20 +1,30 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Control } from "./Control";
+import { Control, ControlOptions } from "./Control";
+import { Label } from "./Label";
 
 /* ================================================================================================================= */
 
 export class Button extends Control
 {
-    constructor()
+    constructor(label?: string, options?: ControlOptions)
     {
-        super();
+        super(Object.assign({}, { tagName: 'BUTTON' }, options));
+
+        if (label != null)
+        {
+            let l = new Label(label);
+            this.add(l);
+        }
+
+        this.listen('click');
     }
 
-    protected build(): HTMLElement
+    public click(e: any): void
     {
-        return document.createElement('BUTTON');
+        //console.log('Button clicked!');
+        //window.close();
     }
 }
 
