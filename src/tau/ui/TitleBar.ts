@@ -29,7 +29,9 @@ export class TitleBar extends Control
 
         if (process.platform != 'darwin')
         {
-            this.addMenuBar();
+            if (process.platform == 'win32')
+                this.addMenuBar();
+
             this.add(this.m_label);
             this.addControlButtons();
         }
