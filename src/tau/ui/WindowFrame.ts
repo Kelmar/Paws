@@ -1,10 +1,13 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Observable } from "rxjs";
+
 import * as domUtils from "./DomUtils";
 
 import { Control } from "./Control";
 import { TitleBar } from "./TitleBar";
+import { Panel } from "./Panel";
 
 /* ================================================================================================================= */
 
@@ -13,7 +16,7 @@ export interface FrameOptions
     osTitleBar?: boolean;
 }
 
-const defaultOptions: FrameOptions = {
+const DEFAULT_FRAME_OPTIONS: FrameOptions = {
     osTitleBar: false
 }
 
@@ -22,18 +25,37 @@ const defaultOptions: FrameOptions = {
 export class WindowFrame extends Control
 {
     private m_titleBar: TitleBar;
+    private m_clientArea: Panel;
 
     constructor(options?: FrameOptions)
     {
         super({ element: domUtils.findOrCreateTag('BODY') });
 
-        options = {...defaultOptions, ...options};
+        options = {...DEFAULT_FRAME_OPTIONS, ...options};
 
         if (!options.osTitleBar)
         {
             this.m_titleBar = new TitleBar();
             super.add(this.m_titleBar);
         }
+
+        this.m_clientArea = new Panel();
+        super.add(this.m_clientArea);
+    }
+
+    public get windowEvent$(): Observable<string>
+    {
+        return this.m_titleBar.windowEvent$;
+    }
+
+    public get isMaximized(): boolean
+    {
+        return this.m_titleBar.isMaximized;
+    }
+
+    public set isMaximized(value: boolean)
+    {
+        this.m_titleBar.isMaximized = value;
     }
 
     public get title(): string
@@ -47,6 +69,16 @@ export class WindowFrame extends Control
             this.m_titleBar.title = value;
 
         document.title = value;
+    }
+
+    public add(child: Control): void
+    {
+        this.m_clientArea.add(child);
+    }
+
+    public remove(child: Control): void
+    {
+        this.m_clientArea.remove(child);
     }
 }
 

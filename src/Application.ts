@@ -41,17 +41,24 @@ export default class Application implements IDisposable
     {
         if (this.window != null)
             return;
-            
-        this.window = new BrowserWindow({
+
+        let bwOptions: Electron.BrowserWindowConstructorOptions = {
             width: 800,
             height: 600,
             show: false,
-            //frame: false,
-            //titleBarStyle: 'hiddenInset',
+            frame: false,
             webPreferences: {
                 nodeIntegration: true
             }
-        });
+        };
+
+        if (process.platform == 'darwin')
+        {
+            bwOptions.frame = true;
+            bwOptions.titleBarStyle = 'hidden';
+        }
+
+        this.window = new BrowserWindow(bwOptions);
         
         let options: WindowOptions = {
             windowClass: 'MainWindow',

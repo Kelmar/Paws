@@ -1,8 +1,18 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Observable } from "rxjs";
+
 import { Control, ControlOptions } from "./Control";
 import { Label } from "./Label";
+
+import { EventType } from "./DomEvents";
+
+/* ================================================================================================================= */
+
+const DEFAULT_BUTTON_OPTIONS: ControlOptions = {
+    tagName: 'BUTTON'
+};
 
 /* ================================================================================================================= */
 
@@ -10,7 +20,7 @@ export class Button extends Control
 {
     constructor(label?: string, options?: ControlOptions)
     {
-        super(Object.assign({}, { tagName: 'BUTTON' }, options));
+        super({...DEFAULT_BUTTON_OPTIONS, ...options});
 
         if (label != null)
         {
@@ -18,14 +28,10 @@ export class Button extends Control
             this.add(l);
         }
 
-        this.listen('click');
+        this.click$ = this.observe(EventType.Click);
     }
 
-    public click(e: any): void
-    {
-        //console.log('Button clicked!');
-        //window.close();
-    }
+    public readonly click$: Observable<Event>;
 }
 
 /* ================================================================================================================= */

@@ -1,9 +1,13 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Observable, fromEvent } from "rxjs";
+
 import { IDisposable } from "lepton-di";
 
 import { LinkedList } from "../common";
+
+import { EventType } from './DomEvents';
 
 /* ================================================================================================================= */
 
@@ -16,23 +20,6 @@ export interface ControlOptions
 
 const DEFAULT_CONTROL_OPTIONS: ControlOptions = {
     tagName: 'DIV'
-}
-
-/* ================================================================================================================= */
-
-export interface ListenOptions
-{
-    useCapture?: boolean;
-    allowDefault?: boolean;
-    allowBubble?: boolean;
-    callback?: (e: any) => void;
-}
-
-const DEFAULT_LISTEN_OPTIONS: ListenOptions = {
-    useCapture: false,
-    allowDefault: false,
-    allowBubble: false,
-    callback: null
 }
 
 /* ================================================================================================================= */
@@ -58,7 +45,6 @@ export abstract class Control implements IDisposable
 {
     // Private properites
 
-    private m_listeners: Map<string, IDisposable> = new Map();
     private m_element: HTMLElement;
     private m_children: LinkedList<Control> = new LinkedList();
     private m_parent: Control;
@@ -67,7 +53,7 @@ export abstract class Control implements IDisposable
 
     protected constructor(options?: ControlOptions)
     {
-        options = Object.assign({}, DEFAULT_CONTROL_OPTIONS, options);
+        options = {...DEFAULT_CONTROL_OPTIONS, ...options};
 
         this.m_element = (options.element != null) ? options.element : document.createElement(options.tagName);
 
@@ -88,11 +74,6 @@ export abstract class Control implements IDisposable
             }
 
             this.forEach(c => c.dispose());
-
-            for (let listener of this.m_listeners)
-                listener[1].dispose();
-
-            this.m_listeners.clear();
 
             tagElement(this.m_element, null);
             this.m_element = null;
@@ -153,41 +134,9 @@ export abstract class Control implements IDisposable
 
     // Implementation
 
-    private stopEvent(e: any, options: ListenOptions): void
+    protected observe(type: EventType): Observable<Event>
     {
-        if (!options.allowBubble)
-        {
-            if (e.stopPropagation)
-                e.stopPropagation();
-
-            e.cancelBubble = true;
-        }
-
-        if (!options.allowDefault)
-        {
-            if (e.preventDefault)
-                e.preventDefault();
-
-            e.returnValue = false;
-        }
-    }
-
-    protected listen(type: string, options?: ListenOptions): void
-    {
-        if (this.m_listeners.has(type))
-            return;
-
-        options = Object.assign({}, DEFAULT_LISTEN_OPTIONS, options);
-
-        if (options.callback == null)
-            options.callback = (this as any)[type];
-
-        let handle = this.m_element.listen(type, e => {
-            this.stopEvent(e, options);
-            options.callback(e);
-        }, options.useCapture);
-
-        this.m_listeners.set(type, handle);
+        return fromEvent(this.m_element, type);
     }
 
     protected forEach(cb: (c: Control) => void): void
