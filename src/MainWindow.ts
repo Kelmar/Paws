@@ -18,3 +18,19 @@ export class MainWindow extends Window
 
 /* ================================================================================================================= */
 
+export class Main
+{
+    public mainWindow: MainWindow;
+
+    public configure(): void
+    {
+    }
+
+    public ready(): void
+    {
+        this.mainWindow = new MainWindow();
+    }
+}
+
+/* ================================================================================================================= */
+

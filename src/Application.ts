@@ -3,7 +3,7 @@ import * as url from "url";
 
 import { IDisposable } from "lepton-di";
 
-import { WindowOptions } from 'tau/ui/Window';
+import { WindowOptions } from 'tau/ui';
 
 export default class Application implements IDisposable
 {
@@ -61,7 +61,7 @@ export default class Application implements IDisposable
         this.window = new BrowserWindow(bwOptions);
         
         let options: WindowOptions = {
-            windowClass: 'MainWindow',
+            mainClass: 'Main',
             fileName: `${__dirname}/MainWindow`
         };
 
@@ -76,7 +76,6 @@ export default class Application implements IDisposable
 
         this.window.on('close', () =>
         {
-            
             this.window = null;
         });
 

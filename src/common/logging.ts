@@ -27,11 +27,11 @@ export class LogMessage
     public readonly text: string;
     public readonly properties: any;
 
-    constructor(readonly level: Level, text: string, args?: any)
+    constructor(readonly level: Level, readonly error: Error, text: string, ...args: any[])
     {
         this.levelName = Level[level];
         this.timestamp = new Date();
-        this.text = args !== null ? text.formatPegasus(args) : text;
+        this.text = (args !== null && args.length > 0) ? text.formatPegasus(...args) : text;
         this.properties = args;
     }
 }
@@ -45,17 +45,19 @@ export interface ILogTarget
 
 export interface ILogger
 {
+    level: Level;
+
     isEnabled(level: Level): boolean;
 
-    write<T>(level: Level, msg: any, args?: T): void;
+    write(level: Level, e: Error | string, ...args: any[]): void;
 
-    verbose<T>(msg: any, args?: T): void;
-    trace  <T>(msg: any, args?: T): void;
-    debug  <T>(msg: any, args?: T): void;
-    info   <T>(msg: any, args?: T): void;
-    warn   <T>(msg: any, args?: T): void;
-    error  <T>(msg: any, args?: T): void;
-    fatal  <T>(msg: any, args?: T): void;
+    verbose(e: Error | string, ...args: any[]): void;
+    trace  (e: Error | string, ...args: any[]): void;
+    debug  (e: Error | string, ...args: any[]): void;
+    info   (e: Error | string, ...args: any[]): void;
+    warn   (e: Error | string, ...args: any[]): void;
+    error  (e: Error | string, ...args: any[]): void;
+    fatal  (e: Error | string, ...args: any[]): void;
 }
 
 class ConsoleTarget implements ILogTarget
@@ -63,6 +65,9 @@ class ConsoleTarget implements ILogTarget
     public write(message: LogMessage): void
     {
         console.log("{timestamp} {levelName,5}: {text}".formatPegasus(message));
+
+        if (message.error != null)
+            console.log(message.error);
     }
 }
 
@@ -70,24 +75,41 @@ class Logger implements ILogger
 {
     constructor(readonly target: ILogTarget)
     {
+        this.level = Level.Debug;
     }
 
-    isEnabled(level: Level): boolean { return true; }
+    public level: Level;
 
-    write<T>(level: Level, msg: any, args?: T): void
+    public isEnabled(level: Level): boolean { return level >= this.level; }
+
+    public write(level: Level, e: Error | string, ...args: any[]): void
     {
-        let message = new LogMessage(level, msg, args);
+        if (!this.isEnabled(level))
+            return;
+
+        let error: Error = null;
+        let msg: string;
+
+        if (e instanceof Error)
+        {
+            error = e;
+            msg = args.shift();
+        }
+        else
+            msg = e;
+
+        let message = new LogMessage(level, error, msg, ...args);
 
         this.target.write(message);
     }
 
-    verbose<T>(msg: any, args?: T): void { this.write(Level.Verbose, msg, args); }
-    trace  <T>(msg: any, args?: T): void { this.write(Level.Trace  , msg, args); }
-    debug  <T>(msg: any, args?: T): void { this.write(Level.Debug  , msg, args); }
-    info   <T>(msg: any, args?: T): void { this.write(Level.Info   , msg, args); }
-    warn   <T>(msg: any, args?: T): void { this.write(Level.Warn   , msg, args); }
-    error  <T>(msg: any, args?: T): void { this.write(Level.Error  , msg, args); }
-    fatal  <T>(msg: any, args?: T): void { this.write(Level.Fatal  , msg, args); }
+    public verbose(e: Error | string, ...args: any[]): void { this.write(Level.Verbose, e, ...args); }
+    public trace  (e: Error | string, ...args: any[]): void { this.write(Level.Trace  , e, ...args); }
+    public debug  (e: Error | string, ...args: any[]): void { this.write(Level.Debug  , e, ...args); }
+    public info   (e: Error | string, ...args: any[]): void { this.write(Level.Info   , e, ...args); }
+    public warn   (e: Error | string, ...args: any[]): void { this.write(Level.Warn   , e, ...args); }
+    public error  (e: Error | string, ...args: any[]): void { this.write(Level.Error  , e, ...args); }
+    public fatal  (e: Error | string, ...args: any[]): void { this.write(Level.Fatal  , e, ...args); }
 }
 
 let defaultTarget: ConsoleTarget = null;

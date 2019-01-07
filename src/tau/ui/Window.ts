@@ -15,53 +15,6 @@ import { WindowFrame, FrameOptions } from "./WindowFrame";
 
 /* ================================================================================================================= */
 
-export interface WindowOptions
-{
-    fileName: string;
-    initClass?: string;
-    windowClass: string;
-}
-
-/* ================================================================================================================= */
-
-let g_self: Window = null;
-let g_init: any = null;
-
-function readOptions(): WindowOptions
-{
-    let str = window.location.hash.replace(/^#/, '');
-    str = decodeURIComponent(str);
-    return JSON.parse(str);
-}
-
-function bootstrapMain()
-{
-    const options = readOptions();
-
-    const ext: any = require(options.fileName);
-
-    if (options.initClass)
-        g_init = new ext[options.initClass]();
-
-    let subs: Subscription[] = [];
-
-    function continueLoad()
-    {
-        for (let sub of subs)
-            sub.unsubscribe();
-
-        subs = null;
-
-        console.log(`Loading ${options.windowClass}`);
-        g_self = new ext[options.windowClass]();
-    }
-
-    subs.push(fromEvent(document, EventType.ContentLoaded).subscribe(continueLoad));
-    subs.push(fromEvent(window, EventType.Load).subscribe(continueLoad));
-}
-
-/* ================================================================================================================= */
-
 export abstract class Window implements IDisposable
 {
     private readonly m_browserWin: BrowserWindow;
@@ -91,16 +44,6 @@ export abstract class Window implements IDisposable
 
         this.m_frame.dispose();
         this.m_frame = null;
-
-        if (g_init != null)
-        {
-            if (typeof g_init['dispose'] === 'function')
-                g_init['dispose']();
-
-            g_init = null;
-        }
-
-        g_self = null;
     }
 
     public get title(): string
@@ -164,11 +107,6 @@ export abstract class Window implements IDisposable
     public remove(child: Control): void
     {
         this.m_frame.remove(child);
-    }
-
-    public static bootstrap(): void
-    {
-        bootstrapMain();
     }
 }
 
