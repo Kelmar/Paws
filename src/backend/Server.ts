@@ -37,22 +37,6 @@ export default class Server implements IDisposable
             .subscribe(client => this.connect(client));
     }
 
-    public run(): void
-    {
-        // I very much do not like this....
-        let cb: Function;
-        
-        cb = () =>
-        {
-            if (this.m_connSubscribe.closed)
-                return;
-
-            setTimeout(cb, 100);
-        };
-
-        cb();
-    }
-
     private connect(client: IClient): void
     {
         this.m_log.debug(`New connection from ${client.id}`);

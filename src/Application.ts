@@ -34,11 +34,7 @@ export default class Application implements IDisposable
 
     private onReady(): void
     {
-        let menu = new Menu();
-        let appMenu = new Menu();
-        menu.append(new MenuItem({ label: "Paws", submenu: appMenu }));
-
-        Menu.setApplicationMenu(menu);
+        // Menu Init needs to happen after app.ready event, but in main process.
 
         this.createWindow();
     }
@@ -52,7 +48,7 @@ export default class Application implements IDisposable
             width: 800,
             height: 600,
             show: false,
-            //frame: false,
+            frame: false,
             webPreferences: {
                 nodeIntegration: true
             }

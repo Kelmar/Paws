@@ -1,32 +1,31 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Container } from 'lepton-di';
+
 import Application from './Application';
 import Server from './backend/Server';
 
-// Force initialization of IPC transport layer.
 import { transport } from './backend/transport';
-import { using, Container } from 'lepton-di';
+import { menuService } from './tau/services/MenuService';
 
 /* ================================================================================================================= */
 
 let container = new Container();
 
 transport.configure(container);
+menuService.configure(container);
 
-/* ================================================================================================================= */
+let scope = container.beginScope();
 
-using (container.beginScope(), scope =>
-{
-    let server: Server = new Server();
-    scope.buildUp(server);
+let server: Server = new Server();
+scope.buildUp(server);
 
-    server.start();
+server.start();
 
-    if (process.versions.electron != null)
-        var app: Application = new Application();
+let app: Application = null;
 
-    server.run();
-});
+if (process.versions.electron != null)
+    app = new Application();
 
 /* ================================================================================================================= */
