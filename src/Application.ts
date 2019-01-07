@@ -1,12 +1,27 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu, MenuItem } from "electron";
+import * as url from "url";
 
-export default class Application
+import { IDisposable } from "lepton-di";
+
+import { WindowOptions } from 'tau/ui';
+
+export default class Application implements IDisposable
 {
+    private window: BrowserWindow;
+    
     public constructor()
     {
-        app.on('ready', () => this.createWindow());
+        app.on('ready', () => this.onReady());
         app.on('activate', () => this.createWindow());
         app.on('window-all-closed', () => this.onAllWindowsClosed());
+    }
+
+    public dispose()
+    {
+        if (this.window != null)
+            this.window.close();
+
+        this.window = null;
     }
 
     public quit(exitCode?: number): void
@@ -17,15 +32,60 @@ export default class Application
         app.quit();
     }
 
+    private onReady(): void
+    {
+        // Menu Init needs to happen after app.ready event, but in main process.
+
+        this.createWindow();
+    }
+
     private createWindow(): void
     {
-        var win: BrowserWindow = new BrowserWindow({width: 800, height: 600, show: false});
+        if (this.window != null)
+            return;
 
-        win.loadFile(`${__dirname}/index.html`);
+        let bwOptions: Electron.BrowserWindowConstructorOptions = {
+            width: 800,
+            height: 600,
+            show: false,
+            frame: false,
+            webPreferences: {
+                nodeIntegration: true
+            }
+        };
 
-        win.on('ready-to-show', () =>
+        if (process.platform == 'darwin')
         {
-            win.show();
+            bwOptions.frame = true;
+            bwOptions.titleBarStyle = 'hidden';
+        }
+
+        this.window = new BrowserWindow(bwOptions);
+        
+        let options: WindowOptions = {
+            mainClass: 'Main',
+            fileName: `${__dirname}/MainWindow`
+        };
+
+        let loc = url.format({
+            protocol: 'file',
+            pathname: `${__dirname}/index.html`,
+            slashes: true,
+            hash: encodeURIComponent(JSON.stringify(options))
+        });
+
+        this.window.loadURL(loc);
+
+        this.window.on('close', () =>
+        {
+            this.window = null;
+        });
+
+        this.window.on('ready-to-show', () =>
+        {
+            this.window.show();
+
+            //this.window.webContents.toggleDevTools();
         })
     }
 

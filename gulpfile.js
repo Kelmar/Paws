@@ -2,50 +2,29 @@
 
 const DIST_DIR = 'dist';
 
-const { series, parallel } = require('gulp');
-const { src, dest, pipe } = require('gulp');
-const { promisify } = require('util');
+const gulp = require('gulp');
+
+const { series } = gulp;
+const { src } = gulp;
+
 const { delTree } = require('./scripts/deltree');
 
-const tsc = require('gulp-typescript');
-const path = require('path');
-const fs = require('fs');
+const mocha = require('gulp-mocha');
 
-const exists = promisify(fs.exists);
-const mkdir = promisify(fs.mkdir);
+require('./scripts/build');
 
 function clean()
 {
     return delTree('./' + DIST_DIR);
 }
 
-function makeDistDir()
+function run_tests()
 {
-    let fullName = path.join('./', DIST_DIR);
-
-    return exists(fullName)
-        .then(found => found ? Promise.resolve() : mkdir(fullName));
+    return src(DIST_DIR + '/tests/index.js', {read: false})
+        .pipe(mocha({ reporter: 'nyan' }));
 }
-
-function copyResources()
-{
-    return src(['src/**/*', '!src/**/*.ts'])
-        .pipe(dest(DIST_DIR));
-}
-
-function compile()
-{
-    let project = tsc.createProject('tsconfig.json');
-
-    return project
-        .src()
-        .pipe(project())
-        .js.pipe(dest(DIST_DIR));
-}
-
-var build = series(makeDistDir, parallel(copyResources, compile))
 
 exports.clean = clean;
-exports.build = build;
-exports.rebuild = series(clean, build);
-exports.default = build;
+//exports.rebuild = series(clean, build);
+//exports.test = series(build, run_tests);
+//exports.default = build;

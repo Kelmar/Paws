@@ -1,0 +1,93 @@
+@import '_variables';
+@import '_fontawesome';
+
+.titlebar-control-btn
+{
+    width: @titlebar-button-size;
+
+    &:hover
+    {
+        background-color: #status[verbose];
+    }
+}
+
+.titlebar
+{
+    text-align: center;
+    height: @titlebar-height;
+
+    -webkit-app-region: drag;
+
+    .btn-group
+    {
+        float: right;
+        -webkit-app-region: no-drag;
+
+        span
+        {
+            border: none;
+            display: inline-block;
+            height: @titlebar-height;
+            line-height: @titlebar-height !important;
+            -webkit-app-region: no-drag;
+
+            .fa-icon;
+            .fas;
+
+            border-radius: 0px !important;
+        }
+
+        .minimize
+        {
+            .titlebar-control-btn;
+
+            &:before
+            {
+                content: @fa-var-window-minimize;
+            }
+        }
+
+        .maximize
+        {
+            .titlebar-control-btn;
+
+            &:before
+            {
+                content: @fa-var-window-maximize;
+            }
+        }
+
+        .restore
+        {
+            .titlebar-control-btn;
+
+            &:before
+            {
+                content: @fa-var-window-restore;
+            }
+        }
+
+        .close
+        {
+            width: @titlebar-button-size * 1.75;
+
+            &:before
+            {
+                content: @fa-var-window-close;
+            }
+
+            &:hover
+            {
+                background-color: #status[error];
+                color: white;
+            }
+        }
+    }
+}
+
+.titlebar label
+{
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0px);
+}

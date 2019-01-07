@@ -6,9 +6,26 @@
         {
             "type": "npm",
             "script": "build",
-            "problemMatcher": [
-                "$tsc"
-            ]
+            "label": "Build Project",
+            "problemMatcher": [ "$tsc" ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "clean",
+            "label": "Clean Project",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "label": "Run Tests",
+            "problemMatcher": [],
+            "group": "build"
         }
     ]
 }
