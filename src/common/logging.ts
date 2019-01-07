@@ -43,6 +43,8 @@ export interface ILogTarget
     write(message: LogMessage): void;
 }
 
+/* ================================================================================================================= */
+
 export interface ILogger
 {
     level: Level;
@@ -60,6 +62,8 @@ export interface ILogger
     fatal  (e: Error | string, ...args: any[]): void;
 }
 
+/* ================================================================================================================= */
+
 class ConsoleTarget implements ILogTarget
 {
     public write(message: LogMessage): void
@@ -70,6 +74,8 @@ class ConsoleTarget implements ILogTarget
             console.log(message.error);
     }
 }
+
+/* ================================================================================================================= */
 
 class Logger implements ILogger
 {
@@ -112,6 +118,8 @@ class Logger implements ILogger
     public fatal  (e: Error | string, ...args: any[]): void { this.write(Level.Fatal  , e, ...args); }
 }
 
+/* ================================================================================================================= */
+
 let defaultTarget: ConsoleTarget = null;
 
 export module LogManager
@@ -124,3 +132,5 @@ export module LogManager
         return new Logger(defaultTarget);
     }
 }
+
+/* ================================================================================================================= */

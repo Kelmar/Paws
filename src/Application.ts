@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, MenuItem } from "electron";
 import * as url from "url";
 
 import { IDisposable } from "lepton-di";
@@ -34,6 +34,12 @@ export default class Application implements IDisposable
 
     private onReady(): void
     {
+        let menu = new Menu();
+        let appMenu = new Menu();
+        menu.append(new MenuItem({ label: "Paws", submenu: appMenu }));
+
+        Menu.setApplicationMenu(menu);
+
         this.createWindow();
     }
 
@@ -46,7 +52,7 @@ export default class Application implements IDisposable
             width: 800,
             height: 600,
             show: false,
-            frame: false,
+            //frame: false,
             webPreferences: {
                 nodeIntegration: true
             }

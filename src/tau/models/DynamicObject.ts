@@ -14,9 +14,9 @@ export interface NotifyCallback
 
 /* ================================================================================================================= */
 
-const DYNAMIC_TAG: unique symbol = Symbol('paws:tau:dynamic');
+const DYNAMIC_TAG: unique symbol = Symbol('tau:dynamic');
 
-let g_log = LogManager.getLogger("paws.tau.dynamic");
+let g_log = LogManager.getLogger("tau.dynamic");
 
 /* ================================================================================================================= */
 
