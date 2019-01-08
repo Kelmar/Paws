@@ -5,6 +5,8 @@
  */
 /* ================================================================================================================= */
 
+require('../common/startup');
+
 import { Subscription, fromEvent, merge} from "rxjs";
 import { first } from "rxjs/operators";
 

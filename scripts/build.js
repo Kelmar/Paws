@@ -28,19 +28,25 @@ function makeDistDir()
 
 function copy_fa_webfonts()
 {
-    return src('node_modules/@fortawesome/fontawesome-free/webfonts/**/*').pipe(dest(DIST_DIR + '/webfonts'));
+    return src(
+        'node_modules/@fortawesome/fontawesome-free/webfonts/**/*',
+        { sense: gulp.lastRun(copy_fa_webfonts) }
+    ).pipe(dest(DIST_DIR + '/webfonts'));
 }
 
 function copy_resources()
 {
-    return src(['src/**/*', '!src/less', '!src/less/**/*', '!src/**/*.ts']).pipe(dest(DIST_DIR));
+    return src(
+        ['src/**/*', '!src/less', '!src/less/**/*', '!src/**/*.ts'],
+        { sense: gulp.lastRun(copy_resources) }
+    ).pipe(dest(DIST_DIR));
 }
 
 var copy_static = parallel(copy_fa_webfonts, copy_resources);
 
 function less_build()
 {
-    return src('src/**/*.less')
+    return src('src/**/*.less', { sense: gulp.lastRun(less_build) })
         .pipe(less({
             paths: [ 'src/less', 'node_modules/@fortawesome' ]
         }))
@@ -53,10 +59,9 @@ function tsc_build()
 {
     let project = tsc.createProject('tsconfig.json');
 
-    return project
-        .src()
+    return src('src/**/*.ts', { sense: gulp.lastRun(tsc_build) })
         .pipe(project())
         .js.pipe(dest(DIST_DIR));
 }
 
-gulp.task('build', series(makeDistDir, copy_static, parallel(tsc_build, less_build)));
+gulp.task('build', series(makeDistDir, copy_static, tsc_build, less_build));

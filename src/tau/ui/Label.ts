@@ -1,15 +1,24 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Control } from "./Control";
+import { Control, ControlOptions } from "./Control";
+
+/* ================================================================================================================= */
+
+let DEFAULT_CONTROL_OPTIONS: ControlOptions =
+{
+    tagName: 'LABEL'
+}
 
 /* ================================================================================================================= */
 
 export class Label extends Control
 {
-    constructor(text?: string)
+    constructor(text?: string, options?: ControlOptions)
     {
-        super({ tagName: 'LABEL' });
+        options = {...DEFAULT_CONTROL_OPTIONS, ...options};
+
+        super(options);
         this.text = text;
     }
 

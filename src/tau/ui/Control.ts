@@ -7,7 +7,7 @@ import { IDisposable } from "lepton-di";
 
 import { LinkedList } from "../common";
 
-import 'DomUtils';
+import './DomUtils';
 import { EventType } from './DomEvents';
 
 /* ================================================================================================================= */

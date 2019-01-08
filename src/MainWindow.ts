@@ -2,7 +2,6 @@
 /* ================================================================================================================= */
 
 import { Window, Label } from './tau/ui';
-import { Menu, MenuItem } from 'electron';
 
 /* ================================================================================================================= */
 
@@ -12,7 +11,8 @@ export class MainWindow extends Window
     {
         super();
         this.title = 'Paws';
-        let l = new Label('Testing');
+        let l = new Label('Welcome!', { tagName: 'H1' });
+        l.addClass('center');
         this.add(l);
     }
 }
