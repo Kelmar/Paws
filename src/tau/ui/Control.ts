@@ -7,6 +7,7 @@ import { IDisposable } from "lepton-di";
 
 import { LinkedList } from "../common";
 
+import 'DomUtils';
 import { EventType } from './DomEvents';
 
 /* ================================================================================================================= */
@@ -47,8 +48,9 @@ export abstract class Control implements IDisposable
 {
     // Private properites
 
-    private m_element: HTMLElement;
-    private m_children: LinkedList<Control> = new LinkedList();
+    private readonly m_children: LinkedList<Control> = new LinkedList();
+    private readonly m_element: HTMLElement;
+
     private m_parent: Control;
 
     // Constructor/Destructor
@@ -57,7 +59,7 @@ export abstract class Control implements IDisposable
     {
         options = {...DEFAULT_CONTROL_OPTIONS, ...options};
 
-        this.m_element = (options.element != null) ? options.element : document.createElement(options.tagName);
+        this.m_element = options.element ? options.element : document.createElement(options.tagName);
 
         tagElement(this.m_element, this);
 
@@ -67,19 +69,19 @@ export abstract class Control implements IDisposable
 
     public dispose(): void
     {
-        if (this.m_element)
+        if (this.m_element && this.m_element.isConnected)
         {
-            if (this.m_element.parentElement != null && this.m_element.isConnected)
-            {
-                // Pull ourselves out of the DOM as early as we can to keep things speedy.
-                this.m_element.parentElement.removeChild(this.m_element);
-            }
-
-            this.forEach(c => c.dispose());
-
-            tagElement(this.m_element, null);
-            this.m_element = null;
+            /*
+             * We remove oursleves from the DOM as soon as possible so we don't have to worry about
+             * children getting pulled out of the DOM and creating a cascading set of DOM updates.
+             */
+            this.m_element.detach();
         }
+
+        this.forEach(c => c.dispose());
+
+        if (this.m_element)
+            tagElement(this.m_element, null);
 
         this.m_children.clear();
     }
@@ -93,45 +95,56 @@ export abstract class Control implements IDisposable
 
     public get focused(): boolean
     {
-        return document.activeElement === this.element;
+        return document.activeElement === this.m_element;
     }
 
     public set focused(value: boolean)
     {
         if (value)
-            this.element.focus();
+            this.m_element.focus();
         else
-            this.element.blur();
+            this.m_element.blur();
     }
 
     public get enabled(): boolean
     {
-        return this.element.getAttribute('aria-disabled') !== 'true';
+        if (this.m_element.hasAttribute('aria-disabled'))
+            return this.m_element.getAttribute('aria-disabled') !== 'true';
+
+        return true;
     }
 
     public set enabled(value: boolean)
     {
-        this.element.setAttribute('aria-disabled', (!value).toString());
+        this.m_element.setAttribute('aria-disabled', (!value).toString());
     }
 
+    /**
+     * Sets the aria label for the control.
+     * 
+     * @description The aria label is used by assistive technologies (e.g. screen readers) when
+     * the immediate function of a control cannot be determined just from the text (or lack there of)
+     * in the control.   For example, the close button on a form might be labeled with an 'X', but the
+     * aria label would say 'close' so a screen reader can inform the user of the button's function.
+     */
     public get ariaLabel(): string
     {
-        return this.element.getAttribute('aria-label');
+        return this.m_element.getAttribute('aria-label');
     }
 
     public set ariaLabel(value: string)
     {
-        this.element.setAttribute('aria-label', value);
+        this.m_element.setAttribute('aria-label', value);
     }
 
     public get tooltip(): string
     {
-        return this.element.title;
+        return this.m_element.title;
     }
 
     public set tooltip(value: string)
     {
-        this.element.title = value;
+        this.m_element.title = value;
     }
 
     // Implementation
@@ -141,6 +154,11 @@ export abstract class Control implements IDisposable
         return fromEvent(this.m_element, type);
     }
 
+    /**
+     * Executes a callback function on each child contained within this control.
+     *
+     * @param cb The callback function to execute.
+     */
     protected forEach(cb: (c: Control) => void): void
     {
         for (let c of this.m_children)
@@ -161,9 +179,7 @@ export abstract class Control implements IDisposable
 
                 if (child.m_element.parentElement !== this.m_element)
                 {
-                    if (child.m_element.parentElement != null)
-                        child.m_element.parentElement.removeChild(child.m_element);
-
+                    child.m_element.detach();
                     this.m_element.appendChild(child.m_element);
                 }
             }
@@ -183,18 +199,18 @@ export abstract class Control implements IDisposable
         this.m_children.delete(child);
         child.m_parent = null;
 
-        if (this.m_element && child.m_element)
-            this.m_element.removeChild(child.m_element);
+        if (child.m_element)
+            child.m_element.detach();
     }
 
-    public addClass(className: string): void
+    public addClass(...names: string[]): void
     {
-        this.m_element.classList.add(className);
+        this.m_element.classList.add(...names);
     }
 
-    public removeClass(className: string): void
+    public removeClass(...names: string[]): void
     {
-        this.m_element.classList.remove(className);
+        this.m_element.classList.remove(...names);
     }
 
     protected updateChildren()

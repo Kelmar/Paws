@@ -20,3 +20,23 @@ export function findOrCreateTag(tagName: string): HTMLElement
 }
 
 /* ================================================================================================================= */
+/**
+ * Utility to detach a child from it's parent.
+ */
+function detachElement(): void
+{
+    if (this.parentElement)
+        this.parentElement.removeChild(this);
+}
+
+declare global
+{
+    interface HTMLElement
+    {
+        detach(): void;
+    }
+}
+
+HTMLElement.prototype.detach = detachElement;
+
+/* ================================================================================================================= */

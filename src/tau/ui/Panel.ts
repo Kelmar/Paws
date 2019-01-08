@@ -4,7 +4,9 @@
 import { Control } from "./Control";
 
 /* ================================================================================================================= */
-
+/**
+ * Generic container for multiple controls.
+ */
 export class Panel extends Control
 {
     constructor()

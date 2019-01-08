@@ -1,4 +1,8 @@
 /* ================================================================================================================= */
+/*
+ * DESCRIPTION:
+ *   Initial bootstraping code for new windows.
+ */
 /* ================================================================================================================= */
 
 import { Subscription, fromEvent, merge} from "rxjs";
@@ -42,7 +46,11 @@ function readOptions(): WindowOptions
 var g_main: any;
 
 /* ================================================================================================================= */
-
+/**
+ * Bootstraps a new window.
+ * 
+ * This function is responsible for reading parameters sent by the main process and creating the specified main class.
+ */
 export function bootstrap()
 {
     const log = LogManager.getLogger('tau:bootstrap');
