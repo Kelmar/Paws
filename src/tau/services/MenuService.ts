@@ -15,7 +15,6 @@ export const IMenuService: unique symbol = Symbol('tau:service:menu');
 
 class NativeMenuService implements IMenuService
 {
-
 }
 
 /* ================================================================================================================= */
@@ -32,10 +31,15 @@ export module menuService
     {
         let reg = container.register(IMenuService);
 
-        if (process.platform != "win32")
-            reg.to(NativeMenuService);
+        if (process && process.versions.electron)
+        {
+            if (process.platform != "win32")
+                reg.to(NativeMenuService);
+            else
+                reg.to(CustomMenuService);
+        }
         else
-            reg.to(CustomMenuService);
+            reg.to(CustomMenuService); // Running as web app.
 
         reg.with(Lifetime.Singleton);
     }
