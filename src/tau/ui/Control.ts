@@ -40,7 +40,9 @@ function tagElement(element: HTMLElement, control: Control): void
 }
 
 /* ================================================================================================================= */
-
+/**
+ * Base class for all controls visible in a window.
+ */
 export abstract class Control implements IDisposable
 {
     // Private properites
