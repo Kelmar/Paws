@@ -2,7 +2,7 @@
 
 import { Observable, Subject } from "rxjs";
 
-import * as LogSource from './LogSource';
+import * as LogSource from './logSource';
 
 import { ILogTarget, LogMessage } from "../common/logging";
 

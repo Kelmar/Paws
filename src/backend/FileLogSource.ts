@@ -10,7 +10,7 @@ const chokidar = require('chokidar');
 
 import { Observable, Observer } from "rxjs";
 
-import * as LogSource from './LogSource';
+import * as LogSource from './logSource';
 
 /* ================================================================================================================= */
 /**

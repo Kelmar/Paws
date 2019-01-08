@@ -3,10 +3,10 @@
 
 import { Observable } from "rxjs";
 
-import { Control, ControlOptions } from "./Control";
-import { Label } from "./Label";
+import { Control, ControlOptions } from "./control";
+import { Label } from "./label";
 
-import { EventType } from "./DomEvents";
+import { EventType } from "./domEvents";
 
 /* ================================================================================================================= */
 

@@ -7,10 +7,10 @@ import { fromEvent, Subscription } from "rxjs";
 
 import { IDisposable } from "lepton-di";
 
-import './DomEvents';
-import { EventType } from './DomEvents';
+import './domEvents';
+import { EventType } from './domEvents';
 
-import { Control } from "./Control";
+import { Control } from "./control";
 import { WindowFrame, FrameOptions } from "./WindowFrame";
 
 /* ================================================================================================================= */

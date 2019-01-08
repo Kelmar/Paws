@@ -3,11 +3,11 @@
 
 import { Observable } from "rxjs";
 
-import * as domUtils from "./DomUtils";
+import * as domUtils from "./domUtils";
 
-import { Control } from "./Control";
-import { TitleBar } from "./TitleBar";
-import { Panel } from "./Panel";
+import { Control } from "./control";
+import { TitleBar } from "./titleBar";
+import { Panel } from "./panel";
 
 /* ================================================================================================================= */
 
@@ -68,7 +68,9 @@ export class WindowFrame extends Control
 
     public set title(value: string)
     {
-        this.m_titleBar.title = value;
+        if (this.m_titleBar)
+            this.m_titleBar.title = value;
+
         document.title = value;
     }
 

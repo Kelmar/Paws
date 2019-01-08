@@ -4,10 +4,10 @@
 import { mapTo, mergeMap, tap, } from "rxjs/operators";
 import { Observable, from, merge, iif, of, never } from "rxjs";
 
-import { Control } from "./Control";
-import { Label } from "./Label";
-import { Panel } from "./Panel";
-import { Button } from "./Button";
+import { Control } from "./control";
+import { Label } from "./label";
+import { Panel } from "./panel";
+import { Button } from "./button";
 
 /* ================================================================================================================= */
 

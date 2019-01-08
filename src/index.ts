@@ -3,11 +3,11 @@
 
 import { Container } from 'lepton-di';
 
-import Application from './Application';
-import Server from './backend/Server';
+import Application from './application';
+import Server from './backend/server';
 
 import { transport } from './backend/transport';
-import { menuService } from './tau/services/MenuService';
+import { menuService } from './tau/services/menuService';
 
 /* ================================================================================================================= */
 

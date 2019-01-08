@@ -10,7 +10,7 @@ require('../common/startup');
 import { Subscription, fromEvent, merge} from "rxjs";
 import { first } from "rxjs/operators";
 
-import { EventType } from "./DomEvents";
+import { EventType } from "./domEvents";
 import { LogManager } from "../../common/logging";
 
 /* ================================================================================================================= */

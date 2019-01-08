@@ -1,14 +1,14 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-export * from './Bootstrap';
-export * from './DomUtils';
+export * from './bootstrap';
+export * from './domUtils';
 
-export * from './Control';
-export * from './Button';
-export * from './Label';
-export * from './Panel';
+export * from './control';
+export * from './button';
+export * from './label';
+export * from './panel';
 
-export * from './Window';
+export * from './window';
 
 /* ================================================================================================================= */
