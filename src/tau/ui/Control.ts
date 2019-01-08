@@ -145,27 +145,29 @@ export abstract class Control implements IDisposable
             cb(c);
     }
 
-    public add(child: Control): void
+    public add(...children: Control[]): void
     {
-        if (child.m_parent == null)
-        {
-            child.m_parent = this;
-            this.m_children.push(child);
+        if (children.some(c => c.m_parent && c.m_parent !== this))
+            throw new Error('Child belongs to another parent');
 
-            if (child.m_element.parentElement !== this.m_element)
+        for (let child of children)
+        {
+            if (child.m_parent == null)
             {
-                if (child.m_element.parentElement != null)
-                    child.m_element.parentElement.removeChild(child.m_element);
+                child.m_parent = this;
+                this.m_children.push(child);
 
-                this.m_element.appendChild(child.m_element);
+                if (child.m_element.parentElement !== this.m_element)
+                {
+                    if (child.m_element.parentElement != null)
+                        child.m_element.parentElement.removeChild(child.m_element);
+
+                    this.m_element.appendChild(child.m_element);
+                }
             }
-        }
-        else if (child.m_parent !== this)
-        {
-            throw new Error('Child belongs to another parent!');
-        }
 
-        child.update();
+            child.update();
+        }
     }
 
     public remove(child: Control): void
@@ -191,6 +193,11 @@ export abstract class Control implements IDisposable
     public removeClass(className: string): void
     {
         this.m_element.classList.remove(className);
+    }
+
+    protected updateChildren()
+    {
+        this.forEach(c => c.update());
     }
 
     protected update()

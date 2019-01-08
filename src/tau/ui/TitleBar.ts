@@ -84,6 +84,10 @@ export class TitleBar extends Control
         let maxBtn = new Button(null, { tagName: 'SPAN' });
         let closeBtn = new Button(null, { tagName: 'SPAN' });
 
+        minBtn.addClass('minimize');
+        maxBtn.addClass('maximize');
+        closeBtn.addClass('close');
+
         let maximize$ = of('maximize');
         let restore$ = of('restore');
 
@@ -93,13 +97,12 @@ export class TitleBar extends Control
             minBtn.click$.pipe(mapTo('minimize'))
         ));
 
-        minBtn.addClass('minimize');
-        maxBtn.addClass('maximize');
-        closeBtn.addClass('close');
+        // TODO: Lookup up i18n
+        minBtn.tooltip = 'Minimize';
+        maxBtn.tooltip = 'Maximize';
+        closeBtn.tooltip = 'Close';
 
-        grp.add(minBtn);
-        grp.add(maxBtn);
-        grp.add(closeBtn);
+        grp.add(minBtn, maxBtn, closeBtn);
 
         this.add(grp);
 
