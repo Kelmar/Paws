@@ -7,12 +7,16 @@
 
     &:hover
     {
-        background-color: #status[verbose];
+        background-color: #grey[g400];
     }
 }
 
 .titlebar
 {
+    display: flex;
+    flex: 0 1 auto;
+    
+    background-color: #grey[g200];
     text-align: center;
     height: @titlebar-height;
 
@@ -20,7 +24,9 @@
 
     .btn-group
     {
-        float: right;
+        margin-left: auto;
+        margin-right: 0;
+
         -webkit-app-region: no-drag;
 
         span
@@ -90,4 +96,5 @@
     position: absolute;
     left: 50%;
     transform: translate(-50%, 0px);
+    line-height: @titlebar-height;
 }

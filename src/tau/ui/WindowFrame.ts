@@ -33,14 +33,17 @@ export class WindowFrame extends Control
 
         options = {...DEFAULT_FRAME_OPTIONS, ...options};
 
+        let mainPanel = new Panel({ id: "window-frame" });
+        super.add(mainPanel)
+
         if (!options.osTitleBar)
         {
             this.m_titleBar = new TitleBar();
-            super.add(this.m_titleBar);
+            mainPanel.add(this.m_titleBar);
         }
 
-        this.m_clientArea = new Panel();
-        super.add(this.m_clientArea);
+        this.m_clientArea = new Panel({ id: 'main-container' });
+        mainPanel.add(this.m_clientArea);
     }
 
     public get windowEvent$(): Observable<string>
