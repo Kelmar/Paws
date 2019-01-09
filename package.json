@@ -43,7 +43,6 @@
   },
   "dependencies": {
     "chokidar": "^2.0.4",
-    "event-stream": "^3.3.4",
     "lepton-di": "^1.0.4",
     "moment": "^2.23.0",
     "reflect-metadata": "^0.1.12",
