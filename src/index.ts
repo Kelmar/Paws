@@ -3,7 +3,7 @@
 
 import { Container } from 'lepton-di';
 
-import Application from './application';
+import Application from './tau/application';
 import Server from './backend/server';
 
 import { transport } from './backend/transport';

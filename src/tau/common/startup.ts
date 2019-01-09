@@ -75,6 +75,6 @@ export class EnvironmentInfo
 
 /* ================================================================================================================= */
 
-module.exports.environmentInfo = new EnvironmentInfo();
+export const ENVIRONMENT_INFO = new EnvironmentInfo();
 
 /* ================================================================================================================= */
