@@ -26,27 +26,27 @@ function makeDistDir()
         .then(found => found ? Promise.resolve() : mkdir(fullName));
 }
 
-function copy_fa_webfonts()
+function copy_webfonts()
 {
     return src(
-        'node_modules/@fortawesome/fontawesome-free/webfonts/**/*',
-        { sense: gulp.lastRun(copy_fa_webfonts) }
+        'node_modules/material-design-icons/iconfont/*.+(eot|woff|woff2|ttf)',
+        { sense: gulp.lastRun(copy_webfonts) }
     ).pipe(dest(DIST_DIR + '/webfonts'));
 }
 
 function copy_resources()
 {
     return src(
-        ['src/**/*', '!src/less', '!src/less/**/*', '!src/**/*.ts'],
+        ['src/**/*', '!src/less', '!src/less/**/*', '!src/**/*.less', '!src/**/*.ts'],
         { sense: gulp.lastRun(copy_resources) }
     ).pipe(dest(DIST_DIR));
 }
 
-var copy_static = parallel(copy_fa_webfonts, copy_resources);
+var copy_static = parallel(copy_webfonts, copy_resources);
 
 function less_build()
 {
-    return src('src/**/*.less', { sense: gulp.lastRun(less_build) })
+    return src('src/tau/ui/less/tau.less')
         .pipe(less({
             paths: [ 'src/less', 'node_modules/@fortawesome' ]
         }))

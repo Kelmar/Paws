@@ -1,0 +1,28 @@
+// Override some browser defaults so we have something more suitable for a UI
+
+:focus
+{
+    outline: none;
+}
+
+input, button, select, textarea
+{
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+html, body
+{
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+    height: 100%;
+}
+
+#tau-window-frame
+{
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}

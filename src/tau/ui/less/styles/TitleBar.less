@@ -1,0 +1,69 @@
+.titlebar
+{
+    display: flex;
+    flex: 0 0 auto;
+    
+    background-color: @gray-200;
+    text-align: center;
+    height: @titlebar-height;
+
+    -webkit-app-region: drag;
+
+    .btn-group
+    {
+        margin-left: auto;
+        margin-right: 0;
+
+        -webkit-app-region: no-drag;
+
+        span
+        {
+            border: none;
+            display: inline-block;
+            height: @titlebar-height;
+            line-height: 1;
+            font-size: @titlebar-height * .7;
+            width: @titlebar-button-size;
+            -webkit-app-region: no-drag;
+        }
+
+        .minimize
+        {
+            &:before { content: "v"; }
+            &:hover { background-color: @gray-400; }
+        }
+
+        .maximize
+        {
+            &:before { content: "^"; }
+            &:hover { background-color: @gray-400; }
+        }
+
+        .restore
+        {
+            &:before { content: "r"; }
+            &:hover { background-color: @gray-400; }
+
+            transform: rotate(180);
+        }
+
+        .close
+        {
+            &:before { content: "X"; }
+
+            &:hover
+            {
+                background-color: @log-error;
+                color: white;
+            }
+        }
+    }
+}
+
+.titlebar label
+{
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0px);
+    line-height: @titlebar-height;
+}
