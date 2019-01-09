@@ -1,6 +1,8 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+// Blah, what we have here works for clients, but not for servers.
+
 export interface GenericFunction { (...args: any[]): any; }
 
 export const void_return = function(value: string): void { }
