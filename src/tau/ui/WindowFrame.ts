@@ -33,7 +33,7 @@ export class WindowFrame extends Control
 
         options = {...DEFAULT_FRAME_OPTIONS, ...options};
 
-        let mainPanel = new Panel({ id: "window-frame" });
+        let mainPanel = new Panel({ id: "tau-window-frame" });
         super.add(mainPanel)
 
         if (!options.osTitleBar)
@@ -42,7 +42,7 @@ export class WindowFrame extends Control
             mainPanel.add(this.m_titleBar);
         }
 
-        this.m_clientArea = new Panel({ id: 'main-container' });
+        this.m_clientArea = new Panel({ id: 'tau-main-container' });
         mainPanel.add(this.m_clientArea);
     }
 
