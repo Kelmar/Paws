@@ -1,31 +1,37 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Container } from 'lepton-di';
+import { IContainer } from 'lepton-di';
 
 import Application from './tau/application';
 import Server from './backend/server';
 
 import { transport } from './backend/transport';
-import { menuService } from './tau/services/menuService';
 
 /* ================================================================================================================= */
 
-let container = new Container();
+class PawsApplication extends Application
+{
+    private m_server: Server;
 
-transport.configure(container);
-menuService.configure(container);
+    constructor()
+    {
+        super();
+    }
 
-let scope = container.beginScope();
+    public configure(container: IContainer)
+    {
+        transport.configure(container);
 
-let server: Server = new Server();
-scope.buildUp(server);
+        this.m_server = new Server();
+        this.scope.buildUp(this.m_server);
 
-server.start();
+        this.m_server.start();
+    }
+}
 
-let app: Application = null;
+/* ================================================================================================================= */
 
-if (process.versions.electron != null)
-    app = new Application();
+let app = new PawsApplication();
 
 /* ================================================================================================================= */

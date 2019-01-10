@@ -24,10 +24,12 @@ export interface WindowOpenOptions
     showDevTools?: boolean;
 }
 
+export const IWindowService: unique symbol = Symbol("tau:service:window");
+
 export interface IWindowService
 {
-    open(indexFile: string, mainFile: string, options?: WindowOpenOptions): WindowID;
-    close(window: WindowID): void;
+    open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>;
+    close(window: WindowID): Promise<void>;
 }
 
 /* ================================================================================================================= */

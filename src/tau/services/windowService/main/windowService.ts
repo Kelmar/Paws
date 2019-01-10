@@ -10,6 +10,7 @@ import { IDisposable } from "lepton-di";
 import { WindowOptions } from "tau/ui";
 
 import { WindowID, IWindowService, WindowOpenOptions, FrameType } from "../common/windowService";
+import { service, endpoint } from "../../builders/decorators";
 
 /* ================================================================================================================= */
 
@@ -20,9 +21,14 @@ const DEFAULT_WINDOW_OPEN_OPTIONS: WindowOpenOptions = {
 
 /* ================================================================================================================= */
 
+@service('Window')
 export class MainWindowService implements IWindowService, IDisposable
 {
     private readonly m_windows: Map<WindowID, BrowserWindow> = new Map();
+
+    public constructor()
+    {
+    }
 
     public dispose()
     {
@@ -32,7 +38,12 @@ export class MainWindowService implements IWindowService, IDisposable
         this.m_windows.clear();
     }
 
-    public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): WindowID
+    private onActivate()
+    {
+    }
+
+    @endpoint
+    public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>
     {
         options = {...DEFAULT_WINDOW_OPEN_OPTIONS, ...options};
 
@@ -57,7 +68,7 @@ export class MainWindowService implements IWindowService, IDisposable
 
         let window = new BrowserWindow(bwOptions);
         this.m_windows.set(window.id, window);
-       
+    
         let remoteOptions: WindowOptions = {
             mainClass: 'Main',
             fileName: mainFile
@@ -86,10 +97,11 @@ export class MainWindowService implements IWindowService, IDisposable
                 window.webContents.toggleDevTools();
         });
 
-        return window.id;
+        return Promise.resolve(window.id);
     }
 
-    public close(window: WindowID): void
+    @endpoint
+    public close(window: WindowID): Promise<void>
     {
         let win = this.m_windows.get(window);
 
@@ -98,6 +110,8 @@ export class MainWindowService implements IWindowService, IDisposable
             this.m_windows.delete(window);
             win.close();
         }
+
+        return Promise.resolve();
     }
 }
 
