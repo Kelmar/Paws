@@ -54,8 +54,8 @@ class NullClient implements IClient
 
 export function configureNullTransport(container: IContainer)
 {
-    container.register(IListener).to(NullListener);
-    container.register(IClient).to(NullClient);
+    container.register(IListener).toClass(NullListener);
+    container.register(IClient).toClass(NullClient);
 }
 
 /* ================================================================================================================= */

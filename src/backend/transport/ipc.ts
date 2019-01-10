@@ -180,11 +180,11 @@ export module IPC
     export function configure(container: IContainer)
     {
         container.register(IListener)
-            .to(IpcListener)
+            .toClass(IpcListener)
             .with(Lifetime.Singleton);
 
         container.register(IClient)
-            .to(IpcClient)
+            .toClass(IpcClient)
             .with(Lifetime.Scoped);
     }
 }
