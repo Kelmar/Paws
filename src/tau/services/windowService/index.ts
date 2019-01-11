@@ -1,57 +1,10 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IServiceRegistation } from '..';
-import { MainWindowService } from './main';
-import { BrowserWindowService } from './browser';
-
-/* ================================================================================================================= */
-
-export type WindowID = number;
-
-export enum FrameType
-{
-    /** Use the default frame type. */
-    Default = -1,
-
-    /** Do not create a frame of any sort. */
-    None = 0,
-
-    /** Use the native OS frame if available. */
-    Native = 1,
-
-    /** Use a custom HTML frame if avilable. */
-    Custom = 2
-}
-
-export interface WindowOpenOptions
-{
-    frameType?: FrameType;
-    showDevTools?: boolean;
-}
-
-export const IWindowService: unique symbol = Symbol("tau:service:window");
-
-export interface IWindowService
-{
-    open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>;
-    close(window: WindowID): Promise<void>;
-}
-
-/* ================================================================================================================= */
+export * from './common';
 
 export * from './main';
 export * from './browser';
 
 /* ================================================================================================================= */
 
-export module windowService
-{
-    export function configure(serviceRegistration: IServiceRegistation)
-    {
-        serviceRegistration.register(new MainWindowService());
-        serviceRegistration.register(new BrowserWindowService());
-    }
-}
-
-/* ================================================================================================================= */

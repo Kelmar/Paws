@@ -2,12 +2,13 @@
 /* ================================================================================================================= */
 
 import { app } from "electron";
+import * as path from "path";
 
 import { ENVIRONMENT_INFO, ElectronSupport } from "./common/startup";
 
-import { IDisposable, IContainer, Container, IScope, Lifetime } from "lepton-di";
+import { IDisposable, IContainer, Container, IScope } from "lepton-di";
 
-import { windowService } from "./services/windowService";
+import { IWindowService, MainWindowService, BrowserWindowService } from "./services/windowService";
 
 /* ================================================================================================================= */
 
@@ -19,8 +20,6 @@ export default class Application implements IDisposable
     public constructor()
     {
         this.m_container = new Container();
-
-        //windowService.configure(this.m_container);
 
         switch (ENVIRONMENT_INFO.electron)
         {
@@ -37,9 +36,9 @@ export default class Application implements IDisposable
             break;
         }
 
-        this.configure(this.m_container);
-
         this.m_scope = this.m_container.beginScope();
+
+        this.configure(this.m_container);
     }
 
     public dispose()
@@ -58,6 +57,10 @@ export default class Application implements IDisposable
 
     private mainConfigure()
     {
+        this.m_container
+            .register(IWindowService)
+            .toClass(MainWindowService);
+
         // Not sure if these should be here or in the MainWindowService
         app.on('activate', () => this.onActivated());
         app.on('window-all-closed', () => this.onAllWindowsClosed());
@@ -72,6 +75,9 @@ export default class Application implements IDisposable
 
     private browserConfigure()
     {
+        this.m_container
+            .register(IWindowService)
+            .toClass(BrowserWindowService);
     }
 
     /**
@@ -102,10 +108,12 @@ export default class Application implements IDisposable
 
     private createWindow(): void
     {
-        //let indexFile = path.resolve(`${__dirname}/../index.html`);
-        //let mainFile = path.resolve(`${__dirname}/../MainWindow`);
+        let winServ = this.m_scope.resolve<IWindowService>(IWindowService);
 
-        //this.m_winService.open(indexFile, mainFile);
+        let indexFile = path.resolve(`${__dirname}/../index.html`);
+        let mainFile = path.resolve(`${__dirname}/../MainWindow`);
+
+        winServ.open(indexFile, mainFile);
     }
 
     private onAllWindowsClosed(): void

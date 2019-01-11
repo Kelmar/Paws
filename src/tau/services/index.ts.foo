@@ -1,0 +1,111 @@
+/* ================================================================================================================= */
+/* ================================================================================================================= */
+
+import { IpcMain, IpcRenderer, WebContents } from "electron";
+
+import "reflect-metadata";
+
+
+/* ================================================================================================================= */
+/**
+ * Defines where a service runs locallay.
+ * 
+ * This is used by the ServiceManager to figure out if it needs to send a service request to a remote endpoint or
+ * to use a local endpoint.
+ */
+export enum ServiceTarget
+{
+    /** Service can run server side. */
+    Server   = 0x01,
+
+    /** Service can run on a browser */
+    Browser  = 0x02,
+
+    /** Service can run on any Electron main process. */
+    Main     = 0x04,
+
+    /** Service can run on an Electron renderer process. */
+    Renderer = 0x08,
+
+    /** Service can run on any target. */
+    All      = 0xFF
+}
+
+/* ================================================================================================================= */
+
+const SERVICE_METADATA: unique symbol = Symbol("tau:service:descriptor");
+
+/* ================================================================================================================= */
+
+function getServiceDescriptor(target: any): ServiceDescriptor
+{
+    let descriptor = Reflect.getOwnMetadata(SERVICE_METADATA, target) as ServiceDescriptor;
+
+    if (descriptor == null)
+        descriptor = new ServiceDescriptor();
+
+    return descriptor;
+}
+
+/* ================================================================================================================= */
+
+class EndpointDescriptor
+{
+    constructor (public readonly name: string, public readonly method: Function)
+    {
+    }
+}
+
+/* ================================================================================================================= */
+
+class ServiceDescriptor
+{
+    public name: identifier = null;
+    public targets: ServiceTarget;
+
+    public instance: any;
+
+    public endpoints: EndpointDescriptor[] = [];
+
+    public addEndpoint(name: string, fn: Function): void
+    {
+        this.endpoints.push(new EndpointDescriptor(name, fn));
+    }
+}
+
+/* ================================================================================================================= */
+/**
+ * Registers a class as a service provider.
+ *
+ * @param name The name of the service the class provides.
+ */
+export function service<T>(name: identifier, targets: ServiceTarget): any
+{
+    if (name == null)
+        throw new Error("Service name is required.");
+
+    if (targets == 0)
+        throw new Error("A service target is required.");
+
+    return function (target: Type<T>): void
+    {
+        let srvcDescriptor = getServiceDescriptor(target.prototype);
+        srvcDescriptor.name = name;
+        srvcDescriptor.targets = targets;
+    }
+}
+
+/* ================================================================================================================= */
+/**
+ * Defines a method as an endpoint for a service provider.
+ */
+export function endpoint(target: any, name: string, descriptor: PropertyDescriptor): void
+{
+    let srvcDescriptor = getServiceDescriptor(target);
+
+    srvcDescriptor.addEndpoint(name, descriptor.value);
+
+    Reflect.defineMetadata(SERVICE_METADATA, srvcDescriptor, target);
+}
+
+/* ================================================================================================================= */
