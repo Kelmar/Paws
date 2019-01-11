@@ -3,10 +3,11 @@
 
 import "reflect-metadata";
 
-import { IContainer, Type, identifier, Lifetime } from 'lepton-di';
+import { IContainer, Type, identifier, Lifetime, IScope } from 'lepton-di';
 
 import { ENVIRONMENT_INFO, ElectronSupport } from '../common/startup';
 import { LogManager } from "../../common/logging";
+import { ipcMain, WebContents, ipcRenderer } from "electron";
 
 /* ================================================================================================================= */
 /**
@@ -36,6 +37,7 @@ export enum ServiceTarget
 /* ================================================================================================================= */
 
 const SERVICE_METADATA: unique symbol = Symbol("tau:service:descriptor");
+const RPC_PREFIX: string = 'tau:rpc:';
 
 /* ================================================================================================================= */
 
@@ -53,8 +55,13 @@ function getServiceDescriptor(target: any): ServiceDescriptor
 
 class EndpointDescriptor
 {
-    constructor (public readonly name: string, public readonly method: Function)
+    constructor (public readonly name: string, public readonly method: Function, public readonly parent: ServiceDescriptor)
     {
+    }
+
+    public get channel(): string
+    {
+        return this.parent.channel + "." + this.name;
     }
 }
 
@@ -71,7 +78,12 @@ class ServiceDescriptor
 
     public addEndpoint(name: string, fn: Function): void
     {
-        this.endpoints.push(new EndpointDescriptor(name, fn));
+        this.endpoints.push(new EndpointDescriptor(name, fn, this));
+    }
+
+    public get channel(): string
+    {
+        return RPC_PREFIX + this.name.toString();
     }
 }
 
@@ -153,6 +165,58 @@ export function endpoint(target: any, name: string, descriptor: PropertyDescript
 
 /* ================================================================================================================= */
 
+
+
+/* ================================================================================================================= */
+
+class ServicesManager
+{
+    constructor (container: IContainer, private readonly scope: IScope)
+    {
+    }
+
+    public initialize(service: ServiceDescriptor)
+    {
+        
+    }
+    
+    private initMain(service: ServiceDescriptor)
+    {
+        for (let endpoint of service.endpoints)
+            ipcMain.on(endpoint.channel, (event: Event, arg: any) => this.handleMain(endpoint, event, arg));
+    }
+
+    private initRenderer(service: ServiceDescriptor)
+    {
+        for (let endpoint of service.endpoints)
+            ipcRenderer.on(endpoint.channel, (event: Event, arg: any) => this.handleRenderer(endpoint, event, arg));
+    }
+
+    private handleMain(endpoint: EndpointDescriptor, event: Event, args: any): void
+    {
+        let responseChannel = endpoint.name + ":return";
+        let sender = (event as any).sender as WebContents;
+
+        let service = this.scope.resolve(endpoint.parent.name);
+        let prom: Promise<any> = endpoint.method.apply(service, ...(args.args));
+
+        prom.then(x => {
+            sender.send(responseChannel, x);
+
+            sender = null;
+            event = null;
+            prom = null;
+        });
+    }
+
+    private handleRenderer(endpoint: EndpointDescriptor, event: Event, args: any): void
+    {
+        
+    }
+}
+
+/* ================================================================================================================= */
+
 export module services
 {
     export function initialize(container: IContainer, ...args: identifier[])
@@ -170,6 +234,14 @@ export module services
                     .toClass(value.type)
                     .with(Lifetime.Singleton);
 
+                for (let endpoint of value.endpoints)
+                {
+                    ipcMain.on('tau:rpc:' + endpoint.name, () =>
+                    {
+
+                    });
+                }
+
                 idents.delete(key);
             }
             else
@@ -178,7 +250,9 @@ export module services
 
         if (idents.size > 0)
         {
-            log.warn("Could not locate one or more services: {services}", { services: Array.from(idents).join(", ") });
+            let symbols = Array.from(idents).map(s => s.toString()).join(", ");
+
+            log.warn("Could not locate one or more services: {services}", { services: symbols });
         }
     }
 }

@@ -5,7 +5,7 @@
  */
 /* ================================================================================================================= */
 
-require('../common/startup');
+require("../common/startup");
 
 import { Subscription, fromEvent, merge} from "rxjs";
 import { first } from "rxjs/operators";
@@ -38,7 +38,7 @@ export interface IMainClass
 
 function readOptions(): WindowOptions
 {
-    let str = window.location.hash.replace(/^#/, '');
+    let str = window.location.hash.replace(/^#/, "");
     str = decodeURIComponent(str);
     return JSON.parse(str);
 }
@@ -55,14 +55,14 @@ var g_main: any;
  */
 export function bootstrap()
 {
-    const log = LogManager.getLogger('tau:bootstrap');
+    const log = LogManager.getLogger("tau:bootstrap");
     const options = readOptions();
 
-    log.debug('Loading file: {fileName}', options);
+    log.debug("Loading file: {fileName}", options);
 
     const ext: any = require(options.fileName);
 
-    log.debug('Loading main class: {mainClass}', options);
+    log.debug("Loading main class: {mainClass}", options);
 
     try
     {
@@ -71,8 +71,14 @@ export function bootstrap()
     }
     catch (e)
     {
-        log.error(e, 'Unable to load main class {mainClass}', options);
-        return; // In the future we may want to display an error to the end user so they know what's going on.
+        log.error(e, "Unable to load main class {mainClass}", options);
+
+        document.body.innerHTML = `<h1 class='error'>Unable to load main class ${options.mainClass}</h1>
+<h2 class='error'>${e.name}</h2>
+<div>${e.message}</div>
+<pre>${e.stack}</pre>`;
+
+        return;
     }
 
     let sub: Subscription;
@@ -82,7 +88,7 @@ export function bootstrap()
         sub.unsubscribe();
         sub = null;
 
-        log.debug('Calling {mainClass}.ready()', options)
+        log.debug("Calling {mainClass}.ready()", options);
         g_main.ready();
     }
 
