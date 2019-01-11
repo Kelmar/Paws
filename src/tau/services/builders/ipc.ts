@@ -3,7 +3,7 @@
 
 import { ipcMain, ipcRenderer, IpcMain, IpcRenderer, WebContents,  } from 'electron';
 
-import { FunctionDefinition, GenericFunction, ServiceBuilder } from './base';
+import { FunctionDefinition, ServiceBuilder } from './base';
 
 /* ================================================================================================================= */
 
@@ -22,7 +22,7 @@ export class IpcServiceBuilder<T> extends ServiceBuilder<T>
         this.m_target = target;
     }
 
-    protected buildFunction(fn: FunctionDefinition<T>): GenericFunction
+    protected buildFunction(fn: FunctionDefinition<T>): Function
     {
         let channelName = 'tau:rpc:' + this.name + "." + fn.name;
 

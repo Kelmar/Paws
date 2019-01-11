@@ -2,6 +2,7 @@
 /* ================================================================================================================= */
 
 import * as moment from 'moment';
+
 import { isNumber } from 'util';
 
 /* ================================================================================================================= */
@@ -130,6 +131,10 @@ function formatPegasus(...args: any[]): string
             return formatNumber(value, padding, options);
 
         case "string":
+            break;
+
+        case "symbol":
+            value = value.toString().replace(/^Symbol/, '#');
             break;
 
         case "object":

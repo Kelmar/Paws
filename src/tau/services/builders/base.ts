@@ -1,11 +1,9 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-// Blah, what we have here works for clients, but not for servers.
-
-export interface GenericFunction { (...args: any[]): any; }
-
 export const void_return = function(value: string): void { }
+
+/* ================================================================================================================= */
 
 export class ArgumentDefinition
 {
@@ -13,6 +11,8 @@ export class ArgumentDefinition
     {
     }
 }
+
+/* ================================================================================================================= */
 
 export class FunctionDefinition<T>
 {
@@ -22,7 +22,7 @@ export class FunctionDefinition<T>
 
     public returnFn: (result: string) => any = void_return;
 
-    constructor (public readonly name: string, private readonly parent: ServiceBuilder<T>)
+    constructor (public readonly name: string)
     {
     }
 
@@ -55,6 +55,8 @@ export class FunctionDefinition<T>
     }
 }
 
+/* ================================================================================================================= */
+
 /**
  * Base class for defining a service via a declaritive syntax.
  */
@@ -73,7 +75,7 @@ export abstract class ServiceBuilder<T>
 
         let handler = {
             get: (obj: T, prop: string) => {
-                let fn = new FunctionDefinition<T>(prop, this);
+                let fn = new FunctionDefinition<T>(prop);
                 this.m_functions.push(fn);
 
                 return (...args: ArgumentDefinition[]): any => {
@@ -104,7 +106,7 @@ export abstract class ServiceBuilder<T>
      *
      * @param fn The function definition info to build with.
      */
-    protected abstract buildFunction(fn: FunctionDefinition<T>): GenericFunction;
+    protected abstract buildFunction(fn: FunctionDefinition<T>): Function;
     
     /**
      * Builds a new service object from the defined methods.

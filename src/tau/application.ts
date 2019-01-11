@@ -4,11 +4,10 @@
 import { app } from "electron";
 import * as path from "path";
 
-import { ENVIRONMENT_INFO, ElectronSupport } from "./common/startup";
-
 import { IDisposable, IContainer, Container, IScope } from "lepton-di";
 
-import { IWindowService, MainWindowService, BrowserWindowService } from "./services/windowService";
+import { IWindowService } from "./services/windowService";
+import { services } from "./services";
 
 /* ================================================================================================================= */
 
@@ -21,20 +20,14 @@ export default class Application implements IDisposable
     {
         this.m_container = new Container();
 
-        switch (ENVIRONMENT_INFO.electron)
-        {
-        case ElectronSupport.Main:
-            this.mainConfigure();
-            break;
+        services.initialize(this.m_container, IWindowService);
 
-        case ElectronSupport.Render:
-            this.rendererConfigure();
-            break;
+        // Not sure if these should be here or in the MainWindowService
+        app.on('activate', () => this.onActivated());
+        app.on('window-all-closed', () => this.onAllWindowsClosed());
 
-        case ElectronSupport.None:
-            this.browserConfigure();
-            break;
-        }
+        // This does belong here.
+        app.on('ready', () => this.onReady());
 
         this.m_scope = this.m_container.beginScope();
 
@@ -54,31 +47,6 @@ export default class Application implements IDisposable
     }
 
     public get scope(): IScope { return this.m_scope; }
-
-    private mainConfigure()
-    {
-        this.m_container
-            .register(IWindowService)
-            .toClass(MainWindowService);
-
-        // Not sure if these should be here or in the MainWindowService
-        app.on('activate', () => this.onActivated());
-        app.on('window-all-closed', () => this.onAllWindowsClosed());
-
-        // This does belong here.
-        app.on('ready', () => this.onReady());
-    }
-
-    private rendererConfigure()
-    {
-    }
-
-    private browserConfigure()
-    {
-        this.m_container
-            .register(IWindowService)
-            .toClass(BrowserWindowService);
-    }
 
     /**
      * Configures the application wide DI container.

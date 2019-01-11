@@ -3,7 +3,7 @@
 
 const https = require('https');
 
-import {ServiceBuilder, FunctionDefinition, GenericFunction, void_return, arg } from './base';
+import {ServiceBuilder, FunctionDefinition, void_return, arg } from './base';
 
 /* ================================================================================================================= */
 
@@ -14,7 +14,7 @@ export class RestServiceBuilder<T> extends ServiceBuilder<T>
         super();
     }
 
-    protected buildFunction(fn: FunctionDefinition<T>): GenericFunction
+    protected buildFunction(fn: FunctionDefinition<T>): Function
     {
         let extras = {...{ verb: 'GET', path: fn.name }, ...fn.extras};
         let baseFnUrl = this.baseUrl + extras.path;

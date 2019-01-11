@@ -9,6 +9,8 @@ import { IDisposable } from "lepton-di";
 
 import { WindowOptions } from "tau/ui";
 
+import { endpoint, service, ServiceTarget } from "..";
+
 import { WindowID, WindowOpenOptions, FrameType, IWindowService } from "./common";
 
 /* ================================================================================================================= */
@@ -20,6 +22,7 @@ const DEFAULT_WINDOW_OPEN_OPTIONS: WindowOpenOptions = {
 
 /* ================================================================================================================= */
 
+@service(IWindowService, ServiceTarget.Main)
 export class MainWindowService implements IDisposable, IWindowService
 {
     private readonly m_windows: Map<WindowID, BrowserWindow> = new Map();
@@ -36,6 +39,7 @@ export class MainWindowService implements IDisposable, IWindowService
         this.m_windows.clear();
     }
 
+    @endpoint
     public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>
     {
         options = {...DEFAULT_WINDOW_OPEN_OPTIONS, ...options};
@@ -93,6 +97,7 @@ export class MainWindowService implements IDisposable, IWindowService
         return Promise.resolve(window.id);
     }
 
+    @endpoint
     public close(window: WindowID): Promise<void>
     {
         let win = this.m_windows.get(window);

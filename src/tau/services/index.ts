@@ -1,10 +1,12 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IpcMain, IpcRenderer, WebContents } from "electron";
-
 import "reflect-metadata";
 
+import { IContainer, Type, identifier, Lifetime } from 'lepton-di';
+
+import { ENVIRONMENT_INFO, ElectronSupport } from '../common/startup';
+import { LogManager } from "../../common/logging";
 
 /* ================================================================================================================= */
 /**
@@ -28,7 +30,7 @@ export enum ServiceTarget
     Renderer = 0x08,
 
     /** Service can run on any target. */
-    All      = 0xFF
+    Any      = 0xFF
 }
 
 /* ================================================================================================================= */
@@ -61,9 +63,9 @@ class EndpointDescriptor
 class ServiceDescriptor
 {
     public name: identifier = null;
-    public targets: ServiceTarget;
+    public type: Type<any>;
 
-    public instance: any;
+    public targets: ServiceTarget;
 
     public endpoints: EndpointDescriptor[] = [];
 
@@ -72,6 +74,35 @@ class ServiceDescriptor
         this.endpoints.push(new EndpointDescriptor(name, fn));
     }
 }
+
+/* ================================================================================================================= */
+/**
+ * Indicates the current level of service support for this script.
+ */
+export const SERVICE_TARGET: ServiceTarget = (() =>
+{
+    if (!ENVIRONMENT_INFO.isNode)
+        return ServiceTarget.Browser;
+
+    switch (ENVIRONMENT_INFO.electron)
+    {
+    case ElectronSupport.Main:
+        return ServiceTarget.Main;
+
+    case ElectronSupport.Render:
+        return ServiceTarget.Renderer;
+
+    case ElectronSupport.None:
+    default:
+        return ServiceTarget.Server;
+    }
+})();
+
+/* ================================================================================================================= */
+
+let g_services: Map<identifier, ServiceDescriptor> = new Map();
+
+const log = LogManager.getLogger('tau:services');
 
 /* ================================================================================================================= */
 /**
@@ -87,11 +118,23 @@ export function service<T>(name: identifier, targets: ServiceTarget): any
     if (targets == 0)
         throw new Error("A service target is required.");
 
-    return function (target: Type<T>): void
+    return function (type: Type<T>): void
     {
-        let srvcDescriptor = getServiceDescriptor(target.prototype);
+        let srvcDescriptor = getServiceDescriptor(type.prototype);
         srvcDescriptor.name = name;
+        srvcDescriptor.type = type;
         srvcDescriptor.targets = targets;
+
+        if ((SERVICE_TARGET & targets) != 0)
+        {
+            if (g_services.has(name))
+            {
+                log.warn("Service {serviceName} has already been registered.", { serviceName: name });
+                return;
+            }
+
+            g_services.set(name, srvcDescriptor);
+        }
     }
 }
 
@@ -106,6 +149,38 @@ export function endpoint(target: any, name: string, descriptor: PropertyDescript
     srvcDescriptor.addEndpoint(name, descriptor.value);
 
     Reflect.defineMetadata(SERVICE_METADATA, srvcDescriptor, target);
+}
+
+/* ================================================================================================================= */
+
+export module services
+{
+    export function initialize(container: IContainer, ...args: identifier[])
+    {
+        let idents = new Set<identifier>(args);
+
+        for (let [key, value] of g_services)
+        {
+            if (idents.has(key))
+            {
+                log.debug("Service {serviceName} registered to {className}", { serviceName: key, className: value.type.name });
+
+                container
+                    .register(key)
+                    .toClass(value.type)
+                    .with(Lifetime.Singleton);
+
+                idents.delete(key);
+            }
+            else
+                log.debug("Service {serviceName} not requested, skipping.", { serviceName: key });
+        }
+
+        if (idents.size > 0)
+        {
+            log.warn("Could not locate one or more services: {services}", { services: Array.from(idents).join(", ") });
+        }
+    }
 }
 
 /* ================================================================================================================= */
