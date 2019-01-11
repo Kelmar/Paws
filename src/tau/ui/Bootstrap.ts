@@ -72,6 +72,7 @@ export function bootstrap()
     catch (e)
     {
         log.error(e, 'Unable to load main class {mainClass}', options);
+        return; // In the future we may want to display an error to the end user so they know what's going on.
     }
 
     let sub: Subscription;

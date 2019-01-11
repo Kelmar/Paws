@@ -1,12 +1,13 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { app, ipcMain, remote } from "electron";
+import { app } from "electron";
+
+import { ENVIRONMENT_INFO, ElectronSupport } from "./common/startup";
 
 import { IDisposable, IContainer, Container, IScope, Lifetime } from "lepton-di";
 
-import { IWindowService } from './services/windowService';
-import { MainWindowService } from "./services/windowService/main/windowService";
+import { windowService } from "./services/windowService";
 
 /* ================================================================================================================= */
 
@@ -19,12 +20,22 @@ export default class Application implements IDisposable
     {
         this.m_container = new Container();
 
-        if (ipcMain != null)
+        windowService.configure(this.m_container);
+
+        switch (ENVIRONMENT_INFO.electron)
+        {
+        case ElectronSupport.Main:
             this.mainConfigure();
-        else if (remote != null)
+            break;
+
+        case ElectronSupport.Render:
             this.rendererConfigure();
-        else
+            break;
+
+        case ElectronSupport.None:
             this.browserConfigure();
+            break;
+        }
 
         this.configure(this.m_container);
 
@@ -47,11 +58,6 @@ export default class Application implements IDisposable
 
     private mainConfigure()
     {
-        this.m_container
-            .register(IWindowService)
-            .toClass(MainWindowService)
-            .with(Lifetime.Singleton);
-
         // Not sure if these should be here or in the MainWindowService
         app.on('activate', () => this.onActivated());
         app.on('window-all-closed', () => this.onAllWindowsClosed());
@@ -62,12 +68,6 @@ export default class Application implements IDisposable
 
     private rendererConfigure()
     {
-        /*
-        this.m_container
-            .register(IWindowService)
-            .toClass(RendererWindowService)
-            .with(Lifetime.Singleton);
-        */
     }
 
     private browserConfigure()

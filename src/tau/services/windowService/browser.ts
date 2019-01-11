@@ -1,18 +1,26 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-export * from "./functional";
-export * from "./linkedList";
+import { WindowID, WindowOpenOptions } from ".";
+import { ServiceTarget, service, endpoint } from "..";
 
 /* ================================================================================================================= */
 
-export function maybeDispose(obj: any): void
+@service("Window", ServiceTarget.Browser)
+export class BrowserWindowService
 {
-    if (obj == null)
-        return;
+    @endpoint
+    public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>
+    {
+        return Promise.resolve(0);
+    }
 
-    if (typeof(obj['dispose']) === "function")
-        obj['dispose']();
+    @endpoint
+    public close(window: WindowID): Promise<void>
+    {
+        return Promise.resolve();
+    }
 }
 
 /* ================================================================================================================= */
+
