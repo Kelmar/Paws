@@ -5,11 +5,10 @@ import { IpcMain, IpcRenderer, WebContents } from "electron";
 
 import "reflect-metadata";
 
-import { IDisposable, Type } from "lepton-di";
+import { IDisposable, Type, maybeDispose } from "lepton-di";
 
 import { ENVIRONMENT_INFO, ElectronSupport } from '../common/startup';
 import { ILogger, LogManager } from "common/logging";
-import { maybeDispose } from "tau/common";
 
 /* ================================================================================================================= */
 
@@ -85,6 +84,11 @@ class ServiceDescriptor
 
 /* ================================================================================================================= */
 
+export interface IServiceRegistation
+{
+    register<T>(instance: T): boolean;
+}
+
 export interface IServiceProvider
 {
     get<T>(name: string): T;
@@ -92,7 +96,7 @@ export interface IServiceProvider
 
 /* ================================================================================================================= */
 
-export class ServiceManager implements IDisposable
+export class ServiceManager implements IDisposable, IServiceRegistation, IServiceProvider
 {
     private readonly log: ILogger = LogManager.getLogger('tau:services');
     private readonly serviceTarget: ServiceTarget;

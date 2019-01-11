@@ -1,7 +1,9 @@
-import { IContainer } from 'lepton-di';
+/* ================================================================================================================= */
+/* ================================================================================================================= */
 
-/* ================================================================================================================= */
-/* ================================================================================================================= */
+import { IServiceRegistation } from '..';
+import { MainWindowService } from './main';
+import { BrowserWindowService } from './browser';
 
 /* ================================================================================================================= */
 
@@ -45,8 +47,10 @@ export * from './browser';
 
 export module windowService
 {
-    export function configure(container: IContainer)
+    export function configure(serviceRegistration: IServiceRegistation)
     {
+        serviceRegistration.register(new MainWindowService());
+        serviceRegistration.register(new BrowserWindowService());
     }
 }
 

@@ -20,7 +20,7 @@ export default class Application implements IDisposable
     {
         this.m_container = new Container();
 
-        windowService.configure(this.m_container);
+        //windowService.configure(this.m_container);
 
         switch (ENVIRONMENT_INFO.electron)
         {

@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "chokidar": "^2.0.4",
-    "lepton-di": "^1.1.0",
+    "lepton-di": "^1.1.1",
     "moment": "^2.23.0",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.3.3"
