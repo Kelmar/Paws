@@ -36,10 +36,6 @@ export interface IWindowService
 {
     open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>;
     close(window: WindowID): Promise<void>;
-
-    send(value: string): Promise<void>;
-
-    readonly test$: Observable<string>
 }
 
 /* ================================================================================================================= */

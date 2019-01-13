@@ -22,18 +22,6 @@ export class BrowserWindowService implements IWindowService
     {
         return Promise.resolve();
     }
-
-    @endpoint
-    public send(value: string): Promise<void>
-    {
-        return Promise.resolve();
-    }
-
-    @event
-    public get test$(): Observable<string>
-    {
-        return null;
-    }
 }
 
 /* ================================================================================================================= */

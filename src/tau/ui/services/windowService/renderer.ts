@@ -1,8 +1,6 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Observable } from "rxjs";
-
 import { inject } from "lepton-di";
 
 import { IServiceClient } from "../../../services";
@@ -28,18 +26,6 @@ export class RendererWindowService implements IWindowService
     {
         const name = IWindowService.toString() + ".close";
         return this.client.call(name, window);
-    }
-
-    public send(value: string): Promise<void>
-    {
-        const name = IWindowService.toString() + ".send";
-        return this.client.call(name, value);
-    }
-
-    public get test$(): Observable<string>
-    {
-        const name = IWindowService.toString() + ".test$";
-        return this.client.listen(name);
     }
 }
 

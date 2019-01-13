@@ -12,7 +12,6 @@ import { WindowOptions } from "../..";
 import { endpoint, event, service, ServiceTarget } from "../../../services";
 
 import { WindowID, WindowOpenOptions, FrameType, IWindowService } from "./common";
-import { Observable, Subject } from "rxjs";
 
 /* ================================================================================================================= */
 
@@ -27,7 +26,6 @@ const DEFAULT_WINDOW_OPEN_OPTIONS: WindowOpenOptions = {
 export class MainWindowService implements IDisposable, IWindowService
 {
     private readonly m_windows: Map<WindowID, BrowserWindow> = new Map();
-    private readonly m_subject: Subject<string> = new Subject();
 
     public constructor()
     {
@@ -108,24 +106,9 @@ export class MainWindowService implements IDisposable, IWindowService
         {
             this.m_windows.delete(window);
             win.close();
-
-            this.m_subject.next("testing");
         }
 
         return Promise.resolve();
-    }
-
-    @endpoint
-    public send(value: string): Promise<void>
-    {
-        this.m_subject.next(value);
-        return Promise.resolve();
-    }
-
-    @event
-    public get test$(): Observable<string>
-    {
-        return this.m_subject;
     }
 }
 
