@@ -2,15 +2,15 @@
 
 import { Observable, Subject } from "rxjs";
 
-import * as LogSource from './logSource';
+import { ILogSource, EventType, Event } from "./common";
 
-import { ILogTarget, LogMessage } from "../tau/common/logging";
+import { ILogTarget, LogMessage } from "../../tau/common/logging";
 
 /* ================================================================================================================= */
 
 const INTERNAL_SOURCE: URL = new URL("self:internal");
 
-function eventOf(type: LogSource.EventType, message?: any): LogSource.Event
+function eventOf(type: EventType, message?: any): Event
 {
     return { type: type, source: INTERNAL_SOURCE, message: message };
 }
@@ -19,23 +19,23 @@ function eventOf(type: LogSource.EventType, message?: any): LogSource.Event
 /**
  * Generates log events from our own internal logger.
  */
-export default class InternalLogSource implements LogSource.ILogSource, ILogTarget
+export default class InternalLogSource implements ILogSource, ILogTarget
 {
-    private m_subject: Subject<LogSource.Event>;
+    private m_subject: Subject<Event>;
 
     constructor()
     {
-        this.m_subject = new Subject<LogSource.Event>();
+        this.m_subject = new Subject<Event>();
     }
 
-    public open(options: any): Observable<LogSource.Event>
+    public get event$(): Observable<Event>
     {
         return this.m_subject;
     }
 
     public write(message: LogMessage): void
     {
-        this.m_subject.next(eventOf(LogSource.EventType.NewLine, message))
+        this.m_subject.next(eventOf(EventType.NewLine, message))
     }
 }
 
