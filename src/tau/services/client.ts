@@ -55,11 +55,8 @@ export class ServiceClient implements IServiceClient
         this.client.dispose();
     }
 
-    private parseMessage(message: string): void
+    private parseMessage(msg: IpcMessage): void
     {
-        debugger;
-        let msg: IpcMessage = JSON.parse(message);
-
         switch (msg.type)
         {
         case IpcMessageType.Error:
@@ -70,8 +67,12 @@ export class ServiceClient implements IServiceClient
             this.handleReturn(msg);
             break;
 
-        case IpcMessageType.Raise:
-            this.handleRaise(msg);
+        case IpcMessageType.Next:
+            this.handleNext(msg);
+            break;
+
+        case IpcMessageType.Complete:
+            this.handleComplete(msg);
             break;
         }
     }
@@ -100,7 +101,7 @@ export class ServiceClient implements IServiceClient
         promise.accept(msg.data);
     }
 
-    private handleRaise(msg: IpcMessage): void
+    private handleNext(msg: IpcMessage): void
     {
         let sub = this.m_eventSubjects.get(msg.name);
 
@@ -108,6 +109,17 @@ export class ServiceClient implements IServiceClient
             return;
 
         sub.next(msg.data);
+    }
+
+    private handleComplete(msg: IpcMessage): void
+    {
+        let sub = this.m_eventSubjects.get(msg.name);
+
+        if (sub == null)
+            return;
+
+        sub.complete();
+        this.m_eventSubjects.delete(msg.name);
     }
 
     private send<T>(type: IpcMessageType, name: string, args?: any): Promise<T>
@@ -118,12 +130,16 @@ export class ServiceClient implements IServiceClient
         {
             this.m_requests.set(id, new CallDetails(resolve, reject));
 
-            this.client.send({
+            let msg = {
                 id: id,
                 type: type,
                 name: name,
                 data: args
-            });
+            };
+
+            console.log("Sending message:", JSON.stringify(msg));
+
+            this.client.send(msg);
         });
     }
 

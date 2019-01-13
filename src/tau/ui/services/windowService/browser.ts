@@ -1,9 +1,10 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { endpoint, service, ServiceTarget } from "../../../services";
+import { endpoint, event, service, ServiceTarget } from "../../../services";
 
 import { WindowID, WindowOpenOptions, IWindowService } from "./common";
+import { Observable } from "rxjs";
 
 /* ================================================================================================================= */
 
@@ -20,6 +21,18 @@ export class BrowserWindowService implements IWindowService
     public close(window: WindowID): Promise<void>
     {
         return Promise.resolve();
+    }
+
+    @endpoint
+    public send(value: string): Promise<void>
+    {
+        return Promise.resolve();
+    }
+
+    @event
+    public get test$(): Observable<string>
+    {
+        return null;
     }
 }
 

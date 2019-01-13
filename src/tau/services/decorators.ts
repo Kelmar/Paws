@@ -63,3 +63,15 @@ export function endpoint(target: any, name: string, descriptor: PropertyDescript
 }
 
 /* ================================================================================================================= */
+
+export function event(target: any, name: string, descriptor: PropertyDescriptor): void
+{
+    let srvcDescriptor = getServiceDescriptor(target);
+
+    srvcDescriptor.addEvent(name, descriptor);
+
+    Reflect.defineMetadata(SERVICE_METADATA, srvcDescriptor, target);
+}
+
+/* ================================================================================================================= */
+

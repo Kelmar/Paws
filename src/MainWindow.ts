@@ -30,7 +30,7 @@ export class MainWindow extends Window
 
         this.add(l);
 
-        let b = new Button("Test");
+        let b = new Button("Open");
         b.click$.subscribe(() =>
         {
             let indexFile = path.resolve(`${__dirname}/index.html`);
@@ -40,6 +40,22 @@ export class MainWindow extends Window
         });
 
         this.add(b);
+
+        let b2 = new Button("Test");
+        b2.click$.subscribe(() =>
+        {
+            this.windowService.send("Foo");
+        });
+
+        this.add(b2);
+    }
+
+    public start()
+    {
+        this.windowService.test$.subscribe(x =>
+        {
+            console.log("windowService.test$:", x);
+        });
     }
 }
 
@@ -75,6 +91,7 @@ export class Main
     {
         this.mainWindow = new MainWindow();
         this.scope.buildUp(this.mainWindow);
+        this.mainWindow.start();
     }
 }
 

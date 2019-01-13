@@ -1,31 +1,45 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
+import { Observable } from "rxjs";
+
 import { inject } from "lepton-di";
 
-import { endpoint, service, IServiceClient, ServiceTarget } from "../../../services";
+import { IServiceClient } from "../../../services";
 
 import { WindowID, WindowOpenOptions, IWindowService } from "./common";
 
 /* ================================================================================================================= */
 
-@service(IWindowService, ServiceTarget.Renderer)
 export class RendererWindowService implements IWindowService
 {
     constructor (@inject(IServiceClient) private readonly client: IServiceClient)
     {
+        // TODO: Use a factory to get a client with an established base name.
     }
 
-    @endpoint
     public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>
     {
-        return this.client.call("open", indexFile, mainFile, options);
+        const name = IWindowService.toString() + ".open";
+        return this.client.call(name, indexFile, mainFile, options);
     }
 
-    @endpoint
     public close(window: WindowID): Promise<void>
     {
-        return this.client.call("close", window);
+        const name = IWindowService.toString() + ".close";
+        return this.client.call(name, window);
+    }
+
+    public send(value: string): Promise<void>
+    {
+        const name = IWindowService.toString() + ".send";
+        return this.client.call(name, value);
+    }
+
+    public get test$(): Observable<string>
+    {
+        const name = IWindowService.toString() + ".test$";
+        return this.client.listen(name);
     }
 }
 

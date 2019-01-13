@@ -1,7 +1,7 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Subscription } from "rxjs";
+import { Subscription, Observable } from "rxjs";
 
 import { IDisposable, Type, inject, maybeDispose } from "lepton-di";
 
@@ -9,7 +9,7 @@ import { ILogger, LogManager } from "../../common/logging";
 
 import { IpcMessage, IpcMessageType } from "./common";
 
-import { getServiceDescriptor, EndpointDescriptor } from "./internal";
+import { getServiceDescriptor, EndpointDescriptor, EventDescriptor } from "./internal";
 
 import { IListener, IClient } from "./transport";
 
@@ -21,7 +21,7 @@ class CallBinding implements IDisposable
     {
     }
 
-    public dispose()
+    public dispose(): void
     {
         this.service = null;
     }
@@ -29,6 +29,69 @@ class CallBinding implements IDisposable
     public call(args: any[]): Promise<any>
     {
         return this.endpoint.method.apply(this.service, args);
+    }
+}
+
+/* ================================================================================================================= */
+
+class EventBinding implements IDisposable
+{
+    private m_subscribers: Set<IClient> = new Set();
+    private m_subscription: Subscription;
+
+    constructor (private service: any, private readonly event: EventDescriptor)
+    {
+        let ob$: Observable<any> = event.getMethod.apply(service);
+
+        this.m_subscription = ob$.subscribe({
+            next: x => this.onNext(x),
+            complete: () => this.onComplete(),
+            error: e => this.onError(e)
+        });
+    }
+
+    public dispose(): void
+    {
+        this.m_subscription.unsubscribe();
+
+        this.onComplete();
+
+        this.m_subscribers.clear();
+
+        this.service = null;
+    }
+
+    public subscribe(client: IClient)
+    {
+        this.m_subscribers.add(client);
+    }
+
+    public unsubscribe(client: IClient)
+    {
+        this.m_subscribers.delete(client);
+    }
+
+    private sendAll(type: IpcMessageType, data?: any): void
+    {
+        for (let client of this.m_subscribers)
+        {
+            // TODO: Fix message ID
+            client.send({ id: -1, name: this.event.name, type: type, data: data });
+        }
+    }
+
+    private onNext(data: any): void
+    {
+        this.sendAll(IpcMessageType.Next, data);
+    }
+
+    private onComplete(): void
+    {
+        this.sendAll(IpcMessageType.Complete);
+    }
+
+    private onError(e: any): void
+    {
     }
 }
 
@@ -44,6 +107,8 @@ export class ServiceServer implements IDisposable
     private m_sub: Subscription;
 
     private readonly m_calls: Map<string, CallBinding> = new Map();
+    private readonly m_events: Map<string, EventBinding> = new Map();
+
     private readonly m_services: any[] = [];
 
     constructor()
@@ -52,6 +117,12 @@ export class ServiceServer implements IDisposable
 
     public dispose(): void
     {
+        for (let [_, eb] of this.m_events)
+            eb.dispose();
+
+        for (let [_, cb] of this.m_calls)
+            cb.dispose();
+
         for (let service of this.m_services)
             maybeDispose(service);
 
@@ -131,10 +202,36 @@ export class ServiceServer implements IDisposable
 
     private handleListen(client :IClient, msg: IpcMessage): void
     {
+        let eb = this.m_events.get(msg.name);
+
+        if (eb == null)
+        {
+            let e = new Error("Cannot subscribe, unknown event: " + msg.name);
+            this.m_log.error(e);
+
+            client.send({ id: msg.id, type: IpcMessageType.Error, name: msg.name, data: e });
+            return;
+        }
+
+        console.log(`Client ${client.id} subscribed to ${msg.name}`);
+        eb.subscribe(client);
     }
 
     private handleMute(client: IClient, msg: IpcMessage): void
     {
+        let eb = this.m_events.get(msg.name);
+
+        if (eb == null)
+        {
+            let e = new Error("Cannot unsubscribe, unknown event: " + msg.name);
+            this.m_log.warn(e);
+
+            client.send({ id: msg.id, type: IpcMessageType.Error, name: msg.name, data: e });
+            return;
+        }
+
+        console.log(`Client ${client.id} unsubscribed to ${msg.name}`);
+        eb.unsubscribe(client);
     }
 
     public register<T>(type: Type<T>): T
@@ -151,7 +248,16 @@ export class ServiceServer implements IDisposable
         this.m_services.push(service);
 
         for (let endpoint of descriptor.endpoints)
-            this.m_calls.set(endpoint.name, new CallBinding(service, endpoint));
+        {
+            let callName = descriptor.name.toString() + "." + endpoint.name;
+            this.m_calls.set(callName, new CallBinding(service, endpoint));
+        }
+
+        for (let event of descriptor.events)
+        {
+            let eventName = descriptor.name.toString() + "." + event.name;
+            this.m_events.set(eventName, new EventBinding(service, event));
+        }
 
         this.m_log.info("Service registered: {name}", descriptor);
 

@@ -9,14 +9,16 @@ import { IDisposable } from "lepton-di";
 
 export enum IpcMessageType
 {
-    Call = 100,     // Call a function. (Client to server request)
-    Raise = 101,    // Raise a event.   (Server to client request)
-    Listen = 102,   // Request to listen (Client sub to server event)
-    Mute = 103,     // Request to unlisten (Client unsub to server event)
+    Call     = 100, // Call a function. (Client to server request)
+    Listen   = 101, // Request to listen (Client sub to server event)
+    Mute     = 102, // Request to unlisten (Client unsub to server event)
 
-    Return = 200,   // Call return.     (Client to server response)
+    Next     = 110, // Next event
+    Complete = 111, // Observable has completed.
 
-    Error = 400
+    Return   = 200, // Call return.     (Client to server response)
+
+    Error    = 400
 }
 
 /* ================================================================================================================= */
