@@ -4,7 +4,7 @@ import { Observable, Subject } from "rxjs";
 
 import * as LogSource from './logSource';
 
-import { ILogTarget, LogMessage } from "../common/logging";
+import { ILogTarget, LogMessage } from "../tau/common/logging";
 
 /* ================================================================================================================= */
 

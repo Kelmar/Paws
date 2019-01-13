@@ -2,15 +2,25 @@
 /* ================================================================================================================= */
 
 import { app } from "electron";
-import * as path from "path";
 
 import { IDisposable, IContainer, Container, IScope, Lifetime } from "lepton-di";
 
+import { ServiceServer } from "./services";
 import { transport } from "./services/transport";
 
 import { IWindowService } from "./ui/services/windowService";
 import { MainWindowService } from "./ui/services/windowService/main";
-import { ServiceServer } from "./services";
+
+/* ================================================================================================================= */
+
+export interface IApplicationBehavior
+{
+    configure? (container: IContainer): void;
+
+    start? (): void;
+
+    ready? (): void;
+}
 
 /* ================================================================================================================= */
 
@@ -21,11 +31,12 @@ export default class Application implements IDisposable
 
     private m_server: ServiceServer;
 
-    private readonly m_windowService: IWindowService;
-
-    public constructor()
+    public constructor(public readonly behavior: IApplicationBehavior)
     {
         this.m_container = new Container();
+
+        if (behavior.configure)
+            behavior.configure(this.m_container);
 
         transport.configure(this.m_container);
 
@@ -41,11 +52,19 @@ export default class Application implements IDisposable
         this.m_server = new ServiceServer();
         this.m_scope.buildUp(this.m_server);
 
-        this.m_windowService = this.m_server.register(MainWindowService);
+        let windowService = this.m_server.register(MainWindowService);
 
-        this.configure(this.m_container);
+        this.m_container
+            .register(IWindowService)
+            .toInstance(windowService)
+            .with(Lifetime.Singleton);
 
         this.m_server.start();
+
+        this.m_scope.buildUp(this.behavior);
+
+        if (this.behavior.start)
+            this.behavior.start();
     }
 
     public dispose()
@@ -66,13 +85,6 @@ export default class Application implements IDisposable
 
     public get scope(): IScope { return this.m_scope; }
 
-    /**
-     * Configures the application wide DI container.
-     */
-    public configure(container: IContainer)
-    {
-    }
-
     public quit(exitCode?: number): void
     {
         if (exitCode != null)
@@ -85,21 +97,12 @@ export default class Application implements IDisposable
     {
         // Menu Init needs to happen after app.ready event, but in main process.
 
-        this.createWindow();
+        if (this.behavior.ready)
+            this.behavior.ready();
     }
 
     protected onActivated(): void
     {
-    }
-
-    private createWindow(): void
-    {
-        //let winServ = this.m_scope.resolve<IWindowService>(IWindowService);
-
-        let indexFile = path.resolve(`${__dirname}/../index.html`);
-        let mainFile = path.resolve(`${__dirname}/../MainWindow`);
-
-        this.m_windowService.open(indexFile, mainFile);
     }
 
     private onAllWindowsClosed(): void

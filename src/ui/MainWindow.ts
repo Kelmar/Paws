@@ -1,17 +1,16 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import * as path from "path";
+import { IContainer, Container, Lifetime, IScope } from "lepton-di";
 
-import { IContainer, Container, Lifetime, inject, IScope } from "lepton-di";
+import { transport } from "../tau/services/transport";
+import { IServiceClient } from "../tau/services/common";
+import { ServiceClient } from "../tau/services";
 
-import { transport } from "./tau/services/transport";
-import { IServiceClient } from "./tau/services/common";
-import { ServiceClient } from "./tau/services";
-import { IWindowService } from "./tau/ui/services/windowService";
+import { Window, Label } from "../tau/ui";
 
-import { Window, Label, Button } from "./tau/ui";
-import { RendererWindowService } from "./tau/ui/services/windowService/renderer";
+import { IWindowService } from "../tau/ui/services/windowService";
+import { RendererWindowService } from "../tau/ui/services/windowService/renderer";
 
 /* ================================================================================================================= */
 

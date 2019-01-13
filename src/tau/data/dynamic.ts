@@ -3,7 +3,7 @@
 
 import { Observable, Subject } from "rxjs";
 
-import { LogManager } from "../../common/logging";
+import { LogManager } from "../common/logging";
 
 /* ================================================================================================================= */
 

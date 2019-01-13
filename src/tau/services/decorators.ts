@@ -3,7 +3,7 @@
 
 import { Type, identifier } from 'lepton-di';
 
-import { LogManager } from "../../common/logging";
+import { LogManager } from "../common/logging";
 
 import { SERVICE_TARGET, ServiceTarget } from "./consts";
 
