@@ -71,7 +71,7 @@ class ConsoleTarget implements ILogTarget
         console.log("{timestamp} {levelName,5}: {text}".formatPegasus(message));
 
         if (message.error != null)
-            console.log(message.error);
+            console.log(message.error.stack);
     }
 }
 

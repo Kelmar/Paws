@@ -34,12 +34,12 @@ export module menuService
         if (process && process.versions.electron)
         {
             if (process.platform != "win32")
-                reg.to(NativeMenuService);
+                reg.toClass(NativeMenuService);
             else
-                reg.to(CustomMenuService);
+                reg.toClass(CustomMenuService);
         }
         else
-            reg.to(CustomMenuService); // Running as web app.
+            reg.toClass(CustomMenuService); // Running as web app.
 
         reg.with(Lifetime.Singleton);
     }

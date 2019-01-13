@@ -7,9 +7,12 @@ import * as url from "url";
 
 import { IDisposable } from "lepton-di";
 
-import { WindowOptions } from "tau/ui";
+import { WindowOptions } from "../..";
 
-import { WindowID, IWindowService, WindowOpenOptions, FrameType } from "../common/windowService";
+import { endpoint, event, service, ServiceTarget } from "../../../services";
+
+import { WindowID, WindowOpenOptions, FrameType, IWindowService } from "./common";
+import { Observable, Subject } from "rxjs";
 
 /* ================================================================================================================= */
 
@@ -20,9 +23,15 @@ const DEFAULT_WINDOW_OPEN_OPTIONS: WindowOpenOptions = {
 
 /* ================================================================================================================= */
 
-export class MainWindowService implements IWindowService, IDisposable
+@service(IWindowService, ServiceTarget.Main)
+export class MainWindowService implements IDisposable, IWindowService
 {
     private readonly m_windows: Map<WindowID, BrowserWindow> = new Map();
+    private readonly m_subject: Subject<string> = new Subject();
+
+    public constructor()
+    {
+    }
 
     public dispose()
     {
@@ -32,7 +41,8 @@ export class MainWindowService implements IWindowService, IDisposable
         this.m_windows.clear();
     }
 
-    public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): WindowID
+    @endpoint
+    public open(indexFile: string, mainFile: string, options?: WindowOpenOptions): Promise<WindowID>
     {
         options = {...DEFAULT_WINDOW_OPEN_OPTIONS, ...options};
 
@@ -57,7 +67,7 @@ export class MainWindowService implements IWindowService, IDisposable
 
         let window = new BrowserWindow(bwOptions);
         this.m_windows.set(window.id, window);
-       
+    
         let remoteOptions: WindowOptions = {
             mainClass: 'Main',
             fileName: mainFile
@@ -82,14 +92,15 @@ export class MainWindowService implements IWindowService, IDisposable
         {
             window.show();
 
-            if (options.showDevTools)
+            //if (options.showDevTools)
                 window.webContents.toggleDevTools();
         });
 
-        return window.id;
+        return Promise.resolve(window.id);
     }
 
-    public close(window: WindowID): void
+    @endpoint
+    public close(window: WindowID): Promise<void>
     {
         let win = this.m_windows.get(window);
 
@@ -97,7 +108,24 @@ export class MainWindowService implements IWindowService, IDisposable
         {
             this.m_windows.delete(window);
             win.close();
+
+            this.m_subject.next("testing");
         }
+
+        return Promise.resolve();
+    }
+
+    @endpoint
+    public send(value: string): Promise<void>
+    {
+        this.m_subject.next(value);
+        return Promise.resolve();
+    }
+
+    @event
+    public get test$(): Observable<string>
+    {
+        return this.m_subject;
     }
 }
 

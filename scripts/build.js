@@ -7,6 +7,7 @@ const { src, dest } = gulp;
 const { promisify } = require('util');
 
 const tsc = require('gulp-typescript');
+const sourcemaps = require('gulp-sourcemaps');
 
 const less = require('gulp-less');
 const concat = require('gulp-concat');
@@ -60,8 +61,17 @@ function tsc_build()
     let project = tsc.createProject('tsconfig.json');
 
     return src('src/**/*.ts', { sense: gulp.lastRun(tsc_build) })
+        .pipe(sourcemaps.init())
         .pipe(project())
-        .js.pipe(dest(DIST_DIR));
+        .js
+        .pipe(sourcemaps.write({
+            // Return relative source map root directories per file.
+            sourceRoot: function (file) {
+                var sourceFile = path.join(file.cwd, file.sourceMap.file);
+                return path.relative(path.dirname(sourceFile), file.cwd);
+            }
+        }))
+        .pipe(dest(DIST_DIR));
 }
 
 gulp.task('build', series(makeDistDir, copy_static, tsc_build, less_build));

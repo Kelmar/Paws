@@ -81,6 +81,7 @@ typings/
 
 # Excluding build artifacts.
 dist/
+package-lock.json
 
 # Excluding sandbox (test scripts and other things)
 sandbox/

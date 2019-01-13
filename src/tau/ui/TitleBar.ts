@@ -1,7 +1,7 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { mapTo, mergeMap, tap, } from "rxjs/operators";
+import { mapTo, mergeMap } from "rxjs/operators";
 import { Observable, from, merge, iif, of, never } from "rxjs";
 
 import { Control } from "./control";
@@ -23,13 +23,13 @@ export class TitleBar extends Control
     {
         super();
 
-        this.addClass('titlebar');
+        this.addClass("titlebar");
 
         this.m_label = new Label();
 
-        if (process.platform != 'darwin')
+        if (process.platform != "darwin")
         {
-            if (process.platform == 'win32')
+            if (process.platform == "win32")
                 this.addMenuBar();
 
             this.add(this.m_label);
@@ -78,29 +78,29 @@ export class TitleBar extends Control
     private addControlButtons(): void
     {
         let grp = new Panel();
-        grp.addClass('btn-group');
+        grp.addClass("btn-group");
 
-        let minBtn = new Button(null, { tagName: 'SPAN' });
-        let maxBtn = new Button(null, { tagName: 'SPAN' });
-        let closeBtn = new Button(null, { tagName: 'SPAN' });
+        let minBtn = new Button(null, { tagName: "SPAN" });
+        let maxBtn = new Button(null, { tagName: "SPAN" });
+        let closeBtn = new Button(null, { tagName: "SPAN" });
 
-        minBtn.addClass('minimize');
-        maxBtn.addClass('maximize');
-        closeBtn.addClass('close');
+        minBtn.addClass("minimize");
+        maxBtn.addClass("maximize");
+        closeBtn.addClass("close");
 
-        let maximize$ = of('maximize');
-        let restore$ = of('restore');
+        let maximize$ = of("maximize");
+        let restore$ = of("restore");
 
         this.m_windowEvent$ = from(merge(
-            closeBtn.click$.pipe(mapTo('close')),
+            closeBtn.click$.pipe(mapTo("close")),
             maxBtn.click$.pipe(mergeMap(_ => iif(() => this.isMaximized, restore$, maximize$))),
-            minBtn.click$.pipe(mapTo('minimize'))
+            minBtn.click$.pipe(mapTo("minimize"))
         ));
 
         // TODO: Lookup up i18n
-        minBtn.tooltip = 'Minimize';
-        maxBtn.tooltip = 'Maximize';
-        closeBtn.tooltip = 'Close';
+        minBtn.tooltip = "Minimize";
+        maxBtn.tooltip = "Maximize";
+        closeBtn.tooltip = "Close";
 
         grp.add(minBtn, maxBtn, closeBtn);
 
@@ -115,13 +115,13 @@ export class TitleBar extends Control
         {
             if (this.m_isMaximized)
             {
-                this.m_maximizeBtn.removeClass('maximize');
-                this.m_maximizeBtn.addClass('restore');
+                this.m_maximizeBtn.removeClass("maximize");
+                this.m_maximizeBtn.addClass("restore");
             }
             else
             {
-                this.m_maximizeBtn.addClass('maximize');
-                this.m_maximizeBtn.removeClass('restore');
+                this.m_maximizeBtn.addClass("maximize");
+                this.m_maximizeBtn.removeClass("restore");
             }
         }
     }

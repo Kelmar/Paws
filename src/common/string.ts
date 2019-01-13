@@ -1,8 +1,9 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import * as moment from 'moment';
-import { isNumber } from 'util';
+import * as moment from "moment";
+
+import { isNumber } from "util";
 
 /* ================================================================================================================= */
 
@@ -13,6 +14,11 @@ declare global
         formatPegasus(...args: any[]): string;
         escapeJS(): string;
         escapeHTML(): string;
+    }
+
+    interface Symbol
+    {
+        toString(): string;
     }
 }
 
@@ -132,6 +138,10 @@ function formatPegasus(...args: any[]): string
         case "string":
             break;
 
+        case "symbol":
+            value = value.toString();
+            break;
+
         case "object":
             if (value instanceof Date)
                 value = formatDate(value, options);
@@ -185,6 +195,15 @@ function escapeHTML(): string
 String.prototype.formatPegasus = formatPegasus;
 String.prototype.escapeJS = escapeJS;
 String.prototype.escapeHTML = escapeHTML;
+
+/* ================================================================================================================= */
+
+const oldSymbolToString = Symbol.prototype.toString;
+
+Symbol.prototype.toString = function()
+{
+    return oldSymbolToString.apply(this).replace(/^Symbol/, '#');
+}
 
 /* ================================================================================================================= */
 
