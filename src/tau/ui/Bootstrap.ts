@@ -58,14 +58,12 @@ export function bootstrap()
     const log = LogManager.getLogger("tau:bootstrap");
     const options = readOptions();
 
-    log.debug("Loading file: {fileName}", options);
-
-    const ext: any = require(options.fileName);
-
-    log.debug("Loading main class: {mainClass}", options);
-
     try
     {
+        log.debug("Loading file: {fileName}", options);
+        const ext: any = require(options.fileName);
+        log.debug("Loading main class: {mainClass}", options);
+
         g_main = new ext[options.mainClass]();
         g_main.configure();
     }

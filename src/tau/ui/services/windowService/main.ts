@@ -7,9 +7,9 @@ import * as url from "url";
 
 import { IDisposable } from "lepton-di";
 
-import { WindowOptions } from "tau/ui";
+import { WindowOptions } from "../..";
 
-import { endpoint, service, ServiceTarget } from "..";
+import { endpoint, service, ServiceTarget } from "../../../services";
 
 import { WindowID, WindowOpenOptions, FrameType, IWindowService } from "./common";
 

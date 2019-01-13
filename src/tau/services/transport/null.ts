@@ -15,7 +15,7 @@ class NullListener implements IListener
     {
     }
 
-    public listen(): Observable<IClient>
+    public get listen$(): Observable<IClient>
     {
         return never();
     }
@@ -40,7 +40,7 @@ class NullClient implements IClient
     {
     }
 
-    public recv(): Observable<any>
+    public get receive$(): Observable<any>
     {
         return never();
     }
