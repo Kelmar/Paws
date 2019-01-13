@@ -30,6 +30,8 @@ export class IpcClient implements IClient, IDisposable
     private readonly m_source: SourceType;
     private readonly m_target: TargetType;
 
+    private m_sendBuffer: any[] = [];
+
     private m_id: number;
     private m_msgId: string;
 
@@ -79,6 +81,11 @@ export class IpcClient implements IClient, IDisposable
 
         this.m_source.on(this.m_msgId, (_: any, x: any) => this.m_subject.next(x));
         this.m_source.once("disconnect:" + this.m_id, () => this.onDisconnect());
+
+        for (let msg of this.m_sendBuffer)
+            this.send(msg);
+
+        this.m_sendBuffer = [];
     }
 
     private onDisconnect(): void
@@ -91,15 +98,22 @@ export class IpcClient implements IClient, IDisposable
         }
     }
 
-    public connect(): void
+    public connect(): Promise<void>
     {
         if (this.m_state != ConnectionState.Unbound)
             return;
 
         this.m_state = ConnectionState.Connecting;
 
-        this.m_source.once("connected", (_: any, id: number) => this.onConnected(id));
-        this.m_target.send("connect", {});
+        return new Promise(resolve =>
+        {
+            this.m_source.once("connected", (_: any, id: number) => {
+                resolve();
+                this.onConnected(id);
+            });
+
+            this.m_target.send("connect", {});
+        });
     }
 
     public get receive$(): Observable<any>
@@ -113,6 +127,15 @@ export class IpcClient implements IClient, IDisposable
         {
             //this.m_log.verbose(`Sending ${this.m_msgId}: ${data}`);
             this.m_target.send(this.m_msgId, data);
+        }
+        else if (this.m_state == ConnectionState.Connecting)
+        {
+            this.m_sendBuffer.push(data);
+        }
+        else
+        {
+            const stateName = ConnectionState[this.m_state];
+            throw new Error(`Message not sent, socket in ${stateName} state.`);
         }
     }
 

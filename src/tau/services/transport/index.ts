@@ -39,7 +39,7 @@ export interface IClient extends IDisposable
     
     readonly state: ConnectionState;
 
-    connect(host: string): void;
+    connect(host: string): Promise<void>;
 
     send(data: any): void;
 

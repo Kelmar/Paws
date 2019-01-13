@@ -32,8 +32,9 @@ class NullClient implements IClient
     public get id(): number { return 0; }
     public get state(): ConnectionState { return ConnectionState.Disconnected; }
 
-    public connect(host: string): void
+    public connect(host: string): Promise<void>
     {
+        return Promise.resolve();
     }
 
     public send(data: any): void

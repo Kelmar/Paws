@@ -39,10 +39,8 @@ class EventBinding implements IDisposable
     private m_subscribers: Set<IClient> = new Set();
     private m_subscription: Subscription;
 
-    constructor (private service: any, private readonly event: EventDescriptor)
+    constructor (private service: any, private readonly name: string, private readonly ob$: Observable<any>)
     {
-        let ob$: Observable<any> = event.getMethod.apply(service);
-
         this.m_subscription = ob$.subscribe({
             next: x => this.onNext(x),
             complete: () => this.onComplete(),
@@ -76,7 +74,7 @@ class EventBinding implements IDisposable
         for (let client of this.m_subscribers)
         {
             // TODO: Fix message ID
-            client.send({ id: -1, name: this.event.name, type: type, data: data });
+            client.send({ id: -1, name: this.name, type: type, data: data });
         }
     }
 
@@ -256,7 +254,7 @@ export class ServiceServer implements IDisposable
         for (let event of descriptor.events)
         {
             let eventName = descriptor.name.toString() + "." + event.name;
-            this.m_events.set(eventName, new EventBinding(service, event));
+            this.m_events.set(eventName, new EventBinding(service, eventName, event.getMethod.apply(service)));
         }
 
         this.m_log.info("Service registered: {name}", descriptor);
