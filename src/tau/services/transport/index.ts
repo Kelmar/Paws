@@ -1,17 +1,12 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Observable } from 'rxjs';
+import { Observable } from "rxjs";
 
 import { IDisposable, IContainer } from "lepton-di";
 
-import { IPC } from './ipc';
-import { configureNullTransport } from './null';
-
-/* ================================================================================================================= */
-
-export const IListener: unique symbol = Symbol("paws:backend:transport:listener");
-export const IClient: unique symbol = Symbol("paws:backend:transport:client");
+import { IPC } from "./ipc";
+import { configureNullTransport } from "./null";
 
 /* ================================================================================================================= */
 
@@ -27,12 +22,16 @@ export enum ConnectionState
 // Interfaces
 /* ================================================================================================================= */
 
+export const IListener: unique symbol = Symbol("paws:backend:transport:listener");
+
 export interface IListener extends IDisposable
 {
-    listen(): Observable<IClient>;
+    readonly listen$: Observable<IClient>;
 }
 
 /* ================================================================================================================= */
+
+export const IClient: unique symbol = Symbol("paws:backend:transport:client");
 
 export interface IClient extends IDisposable
 {
@@ -44,7 +43,7 @@ export interface IClient extends IDisposable
 
     send(data: any): void;
 
-    recv(): Observable<any>;
+    readonly receive$: Observable<any>;
 
     disconnect(): void;
 }

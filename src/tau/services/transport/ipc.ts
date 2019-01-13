@@ -1,14 +1,15 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { ipcMain, WebContents, webContents, ipcRenderer, IpcRenderer, IpcMain } from 'electron';
-import { fromEvent, Observable, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { ipcMain, WebContents, ipcRenderer, IpcRenderer, IpcMain } from "electron";
 
-import { IContainer, IDisposable, Lifetime } from 'lepton-di';
+import { fromEvent, Observable, Subject } from "rxjs";
+import { map } from "rxjs/operators";
+
+import { IContainer, IDisposable, Lifetime } from "lepton-di";
 
 import { ConnectionState, IListener, IClient } from ".";
-import { LogManager, ILogger } from '../../common/logging';
+import { LogManager, ILogger } from "../../../common/logging";
 
 /* ================================================================================================================= */
 
@@ -23,7 +24,7 @@ type TargetType = WebContents | IpcRenderer;
 
 export class IpcClient implements IClient, IDisposable
 {
-    private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcConnection');
+    private readonly m_log: ILogger = LogManager.getLogger("paws.backend.ipcConnection");
     private readonly m_subject: Subject<any> = new Subject<any>();
 
     private readonly m_source: SourceType;
@@ -45,7 +46,7 @@ export class IpcClient implements IClient, IDisposable
 
             this.onConnected(id);
 
-            this.m_target.send('connected', this.m_id);
+            this.m_target.send("connected", this.m_id);
 
             this.m_log.info("New connection: ", this.m_id);
         }
@@ -71,13 +72,13 @@ export class IpcClient implements IClient, IDisposable
         this.m_state = ConnectionState.Connected;
 
         this.m_id = id;
-        this.m_msgId = 'msg:' + this.m_id;
+        this.m_msgId = "msg:" + this.m_id;
 
-        // Notify subscribers we're now connected.
+        // Notify subscribers we"re now connected.
         this.m_subject.next(ConnectionState.Connected);
 
-        this.m_source.on(this.m_msgId, (_: any, x :any) => this.m_subject.next(x));
-        this.m_source.once('disconnect:' + this.m_id, () => this.onDisconnect());
+        this.m_source.on(this.m_msgId, (_: any, x: any) => this.m_subject.next(x));
+        this.m_source.once("disconnect:" + this.m_id, () => this.onDisconnect());
     }
 
     private onDisconnect(): void
@@ -97,11 +98,11 @@ export class IpcClient implements IClient, IDisposable
 
         this.m_state = ConnectionState.Connecting;
 
-        this.m_source.once('connected', (_: any, id: number) => this.onConnected(id));
-        this.m_target.send('connect', {});
+        this.m_source.once("connected", (_: any, id: number) => this.onConnected(id));
+        this.m_target.send("connect", {});
     }
 
-    public recv(): Observable<any>
+    public get receive$(): Observable<any>
     {
         return this.m_subject;
     }
@@ -124,9 +125,9 @@ export class IpcClient implements IClient, IDisposable
         this.m_source.removeAllListeners(this.m_msgId);
 
         this.m_subject.complete();
-        this.m_target.send('disconnect', {});
+        this.m_target.send("disconnect", {});
 
-        this.m_log.debug(`Client ${this.m_id} disconnected.`);
+        this.m_log.debug("Client {m_id} disconnected.", this);
     }
 }
 
@@ -134,7 +135,7 @@ export class IpcClient implements IClient, IDisposable
 
 export class IpcListener implements IListener, IDisposable
 {
-    private readonly m_log: ILogger = LogManager.getLogger('paws.backend.ipcListener');
+    private readonly m_log: ILogger = LogManager.getLogger("paws.backend.ipcListener");
     private m_source: Observable<IClient> = null;
 
     constructor()
@@ -143,17 +144,17 @@ export class IpcListener implements IListener, IDisposable
 
     public dispose()
     {
-        this.m_log.info('IPC listener shutting down...');
+        this.m_log.info("IPC listener shutting down...");
 
-        ipcMain.removeAllListeners('connect');
+        ipcMain.removeAllListeners("connect");
     }
 
-    public listen(): Observable<IClient>
+    public get listen$(): Observable<IClient>
     {
         if (this.m_source != null)
             return this.m_source;
 
-        this.m_source = fromEvent(ipcMain, 'connect')
+        this.m_source = fromEvent(ipcMain, "connect")
             .pipe(
                 map(x => (x instanceof Array) ? x.shift() : x),
                 map(x => x.sender as WebContents),
@@ -167,7 +168,9 @@ export class IpcListener implements IListener, IDisposable
 
     private newConnection(sender: WebContents): IpcClient
     {
-        return new IpcClient(ipcMain, sender, ++g_uniqueId);
+        let client = new IpcClient(ipcMain, sender, ++g_uniqueId);
+        sender.send("connected", client.id);
+        return client;
     }
 }
 
@@ -185,7 +188,7 @@ export module IPC
 
         container.register(IClient)
             .toClass(IpcClient)
-            .with(Lifetime.Scoped);
+            .with(Lifetime.Transient);
     }
 }
 
