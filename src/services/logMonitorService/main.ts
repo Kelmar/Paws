@@ -5,6 +5,7 @@ import { Observable, Subject } from "rxjs";
 
 import { IDisposable } from "lepton-di";
 
+import { promiseWrap } from "../../tau/common";
 import { endpoint, event, service, ServiceTarget } from "../../tau/services";
 
 import { ILogMonitor, LogEvent, LogEventType } from "./common";
@@ -38,25 +39,29 @@ export class MainLogMonitor implements ILogMonitor, IDisposable
     private connectSource(source: ILogSource): void
     {
         source.event$.subscribe({
-            next    : e  => this.m_subject.next(e),
-            complete: () => this.m_subject.next({ type: LogEventType.Closed, source: source.name.href }),
-            error   : e  => this.m_subject.next({ type: LogEventType.Error, source: source.name.href, message: e })
+            next: e  => this.processEvent(source, e),
+            complete: () =>
+            {
+                this.processEvent(source, { type: LogEventType.Closed, source: source.name.href });
+                source = null;
+            },
+            error: e  =>
+            {
+                this.processEvent(source, { type: LogEventType.Error, source: source.name.href, message: e });
+                source = null;
+            }
         });
     }
 
     @endpoint
     public open(sourceName: string): Promise<void>
     {
-        let resolved: URL;
+        return promiseWrap(() => this.openUnguarded(sourceName));
+    }
 
-        try
-        {
-            resolved = new URL(sourceName);
-        }
-        catch (e)
-        {
-            return Promise.reject(e);
-        }
+    private openUnguarded(sourceName: string): void
+    {
+        let resolved: URL = new URL(sourceName);
 
         let source = this.m_sources.get(resolved);
 
@@ -80,8 +85,30 @@ export class MainLogMonitor implements ILogMonitor, IDisposable
             this.m_sources.set(resolved, source);
             this.connectSource(source);
         }
+    }
 
-        return Promise.resolve();
+    private processEvent(source: ILogSource, logEvent: LogEvent): void
+    {
+        if (!source)
+            return;
+
+        if (logEvent.message)
+        {
+            // Perform some voodoo on the message.
+            try
+            {
+                let obj = JSON.parse(logEvent.message);
+
+                if (obj)
+                    logEvent.message = obj;
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
+
+        this.m_subject.next(logEvent);
     }
 
     @event
