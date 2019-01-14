@@ -17,6 +17,8 @@ export interface IApplicationBehavior
 {
     configure? (container: IContainer): void;
 
+    configureServices?(server: ServiceServer): void;
+
     start? (): void;
 
     ready? (): void;
@@ -53,6 +55,9 @@ export default class Application implements IDisposable
         this.m_scope.buildUp(this.m_server);
 
         let windowService = this.m_server.register(MainWindowService);
+
+        if (behavior.configureServices)
+            behavior.configureServices(this.m_server);
 
         this.m_container
             .register(IWindowService)

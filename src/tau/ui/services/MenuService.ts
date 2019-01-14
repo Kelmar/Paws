@@ -5,11 +5,11 @@ import { IContainer, Lifetime } from "lepton-di";
 
 /* ================================================================================================================= */
 
+export const IMenuService: unique symbol = Symbol("tau:service:menu");
+
 export interface IMenuService
 {
 }
-
-export const IMenuService: unique symbol = Symbol('tau:service:menu');
 
 /* ================================================================================================================= */
 

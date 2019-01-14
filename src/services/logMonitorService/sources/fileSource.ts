@@ -5,12 +5,14 @@ import * as fs from 'fs';
 
 import { pipeline } from 'stream';
 
-const es = require('event-stream');
+//const es = require('event-stream');
 const chokidar = require('chokidar');
 
-import { Observable, Observer, Subject } from "rxjs";
+import { Observable, Observer } from "rxjs";
 
-import { ILogSource, Event, EventType } from "./common";
+import { LogEvent, LogEventType } from "../common";
+
+import { ILogSource } from "./common";
 
 /* ================================================================================================================= */
 /**
@@ -18,13 +20,6 @@ import { ILogSource, Event, EventType } from "./common";
  */
 export interface FileSourceOptions
 {
-    /**
-     * The file name to watch.
-     * 
-     * This is required.
-     */
-    filename: string;
-
     /**
      * The character encoding for the file.
      * 
@@ -36,7 +31,6 @@ export interface FileSourceOptions
 /* ================================================================================================================= */
 
 const DEFAULT_OPTIONS: FileSourceOptions = {
-    filename: "",
     encoding: "utf8"
 }
 
@@ -57,18 +51,18 @@ class FileWatchState
      */
     public timer    : any;
 
-    constructor (readonly options: FileSourceOptions, readonly observer: Observer<Event>)
+    constructor (readonly name: URL, readonly observer: Observer<LogEvent>)
     {
-        this.sourceUrl = new URL("file://" + options.filename);
+        this.sourceUrl = name;
         this.lastRead = 0;
 
         this.stream = null;
         this.timer  = null;
     }
 
-    public sendEvent(type: EventType, message?: any)
+    public sendEvent(type: LogEventType, message?: any)
     {
-        this.observer.next({ type: type, source: this.sourceUrl, message: message });
+        this.observer.next({ type: type, source: this.sourceUrl.href, message: message });
     }
 }
 
@@ -78,20 +72,23 @@ class FileWatchState
  */
 export default class FileSource implements ILogSource
 {
-    private m_observable: Observable<Event>;
+    private m_observable: Observable<LogEvent>;
+    private m_encoding: string;
 
-    constructor (options: FileSourceOptions)
+    constructor (public name: URL, options?: FileSourceOptions)
     {
         options = {...DEFAULT_OPTIONS, ...options};
 
-        this.m_observable = Observable.create((observer: Observer<Event>) =>
+        this.m_encoding = options.encoding;
+
+        this.m_observable = Observable.create((observer: Observer<LogEvent>) =>
         {
-            if (options.filename.trim() == "")
+            if (this.name.pathname.trim() == "")
                 throw new Error("No file name supplied for FileLogSource.open()");
 
-            let state = new FileWatchState(options, observer);
+            let state = new FileWatchState(this.name, observer);
 
-            let watcher = chokidar.watch(state.options.filename);
+            let watcher = chokidar.watch(this.name.pathname);
 
             watcher.on('add'   , () => this.handleAdd   (state));
             watcher.on('change', () => this.handleChange(state));
@@ -99,28 +96,30 @@ export default class FileSource implements ILogSource
         });
     }
 
-    public get event$(): Observable<Event>
+    public get event$(): Observable<LogEvent>
     {
         return this.m_observable;
     }
 
     private updateTask(state: FileWatchState)
     {
-        state.stream = fs.createReadStream(state.options.filename, { start: state.lastRead, encoding: state.options.encoding });
+        /*
+        state.stream = fs.createReadStream(this.name.pathname, { start: state.lastRead, encoding: this.m_encoding });
   
-        state.stream.on('error', (e: any) => state.sendEvent(EventType.Error, e.toString()));
+        state.stream.on('error', (e: any) => state.sendEvent(LogEventType.Error, e.toString()));
         state.stream.on('data', (chunk: Buffer) => state.lastRead += chunk.length);
 
         pipeline(
             state.stream,
             es.split(),
-            es.mapSync((line: string) => state.sendEvent(EventType.NewLine, line)),
+            es.mapSync((line: string) => state.sendEvent(LogEventType.NewLine, line)),
             es.wait(() =>
             {
                 state.stream = null;
                 state.timer = null;
             })
         );
+        */
     }
 
     private dumpUpdate(state: FileWatchState)
@@ -138,11 +137,11 @@ export default class FileSource implements ILogSource
         if (state.lastRead > 0)
         {
             state.lastRead = 0;
-            state.sendEvent(EventType.Truncated);
+            state.sendEvent(LogEventType.Truncated);
         }
         else
         {
-            state.sendEvent(EventType.Opened);
+            state.sendEvent(LogEventType.Opened);
         }
 
         this.dumpUpdate(state);
@@ -155,7 +154,7 @@ export default class FileSource implements ILogSource
 
     private handleUnlink(state: FileWatchState)
     {
-        state.sendEvent(EventType.Closed);
+        state.sendEvent(LogEventType.Closed);
     }
 }
 

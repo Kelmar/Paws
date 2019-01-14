@@ -1,30 +1,47 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { IContainer, Container, Lifetime, IScope } from "lepton-di";
+import { IContainer, Container, Lifetime, IScope, inject } from "lepton-di";
 
 import { transport } from "../tau/services/transport";
 import { IServiceClient } from "../tau/services/common";
 import { ServiceClient } from "../tau/services";
 
-import { Window, Label } from "../tau/ui";
+import { Window } from "../tau/ui";
 
 import { IWindowService } from "../tau/ui/services/windowService";
 import { RendererWindowService } from "../tau/ui/services/windowService/renderer";
+
+import { ILogMonitor, LogEvent } from "../services/logMonitorService";
+import { RendererLogMonitor } from "../services/logMonitorService/renderer";
+
+import { LogView } from "./LogView";
 
 /* ================================================================================================================= */
 
 export class MainWindow extends Window
 {
+    @inject(ILogMonitor)
+    public logMonitor: ILogMonitor;
+
+    private logView = new LogView();
+
     constructor()
     {
         super();
         this.title = "Paws";
 
-        let l = new Label("Welcome!", { tagName: "H1" });
-        l.addClass("center");
+        this.add(this.logView);
+    }
 
-        this.add(l);
+    public start()
+    {
+        this.logMonitor.event$.subscribe((e: LogEvent) =>
+        {
+            this.logView.addLine(e);
+        });
+
+        this.logMonitor.open("udp4://localhost");
     }
 }
 
@@ -53,6 +70,11 @@ export class Main
             .toClass(RendererWindowService)
             .with(Lifetime.Singleton);
 
+        this.container
+            .register(ILogMonitor)
+            .toClass(RendererLogMonitor)
+            .with(Lifetime.Singleton);
+
         this.scope = this.container.beginScope();
     }
 
@@ -60,6 +82,7 @@ export class Main
     {
         this.mainWindow = new MainWindow();
         this.scope.buildUp(this.mainWindow);
+        this.mainWindow.start();
     }
 }
 

@@ -47,9 +47,9 @@ var copy_static = parallel(copy_webfonts, copy_resources);
 
 function less_build()
 {
-    return src('src/tau/ui/less/tau.less')
+    return src(['src/tau/ui/less/tau.less', 'src/ui/less/paws.less'])
         .pipe(less({
-            paths: [ 'src/less', 'node_modules/@fortawesome' ]
+            paths: [ 'src/ui/less', 'src/tau/ui/less' ]
         }))
         .pipe(concat('css/style.css'))
         .pipe(cleanCSS({ level: 2, format: 'beautify' }))
