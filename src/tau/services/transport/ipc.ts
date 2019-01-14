@@ -9,7 +9,7 @@ import { map } from "rxjs/operators";
 import { IContainer, IDisposable, Lifetime } from "lepton-di";
 
 import { ConnectionState, IListener, IClient } from ".";
-import { LogManager, ILogger } from "../../../common/logging";
+import { LogManager, ILogger } from "../../common/logging";
 
 /* ================================================================================================================= */
 

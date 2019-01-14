@@ -1,19 +1,13 @@
 /* ================================================================================================================= */
-
-import { Observable } from "rxjs";
-
 /* ================================================================================================================= */
 
-interface StringDictionary
-{
-    [key: string]: any;
-}
+import { Observable } from "rxjs";
 
 /* ================================================================================================================= */
 /**
  * Describes the type of event that was received from a LogSource.
  */
-export enum EventType
+export enum LogEventType
 {
     /**
      * The log is being watched for changes.
@@ -49,35 +43,37 @@ export enum EventType
 /**
  * The details of an event from a LogSource
  */
-export class Event
+export interface LogEvent
 {
     /**
      * Programatic details of the event type.
      * 
      * Opened, closed, etc.
      */
-    public type: EventType;
+    type: LogEventType;
 
     /**
      * The identifier for the source in URL form.
      */
-    public source: URL;
+    source: string;
 
     /**
      * The log message.
      * 
      * Only valid for NewLine types
      */
-    public message: any;
+    message?: any;
 }
 
 /* ================================================================================================================= */
-/**
- * Generates events from a source.
- */
-export interface ILogSource
+
+export const ILogMonitor: unique symbol = Symbol("paws:service:logmonitor");
+
+export interface ILogMonitor
 {
-    open(options: any): Observable<Event>;
+    open(sourceName: string): Promise<void>;
+
+    readonly event$: Observable<LogEvent>;
 }
 
 /* ================================================================================================================= */

@@ -5,12 +5,34 @@ import * as fs from 'fs';
 
 import { pipeline } from 'stream';
 
-const es = require('event-stream');
+//const es = require('event-stream');
 const chokidar = require('chokidar');
 
 import { Observable, Observer } from "rxjs";
 
-import * as LogSource from './logSource';
+import { LogEvent, LogEventType } from "../common";
+
+import { ILogSource } from "./common";
+
+/* ================================================================================================================= */
+/**
+ * Options for the FileLogSource
+ */
+export interface FileSourceOptions
+{
+    /**
+     * The character encoding for the file.
+     * 
+     * Optional, defaults to "utf8"
+     */
+    encoding?: string;
+}
+
+/* ================================================================================================================= */
+
+const DEFAULT_OPTIONS: FileSourceOptions = {
+    encoding: "utf8"
+}
 
 /* ================================================================================================================= */
 /**
@@ -29,18 +51,18 @@ class FileWatchState
      */
     public timer    : any;
 
-    constructor (readonly options: FileLogSourceOptions, readonly observer: Observer<LogSource.Event>)
+    constructor (readonly name: URL, readonly observer: Observer<LogEvent>)
     {
-        this.sourceUrl = new URL("file://" + options.filename);
+        this.sourceUrl = name;
         this.lastRead = 0;
 
         this.stream = null;
         this.timer  = null;
     }
 
-    public sendEvent(type: LogSource.EventType, message?: any)
+    public sendEvent(type: LogEventType, message?: any)
     {
-        this.observer.next({ type: type, source: this.sourceUrl, message: message });
+        this.observer.next({ type: type, source: this.sourceUrl.href, message: message });
     }
 }
 
@@ -48,25 +70,25 @@ class FileWatchState
 /**
  * Monitors a file for changes and generates events when new lines are added to the file.
  */
-export default class FileLogSource implements LogSource.ILogSource
+export default class FileSource implements ILogSource
 {
-    public open(options: FileLogSourceOptions): Observable<LogSource.Event>
+    private m_observable: Observable<LogEvent>;
+    private m_encoding: string;
+
+    constructor (public name: URL, options?: FileSourceOptions)
     {
-        let defaultOptions = new FileLogSourceOptions();
+        options = {...DEFAULT_OPTIONS, ...options};
 
-        return Observable.create((observer: Observer<LogSource.Event>) =>
+        this.m_encoding = options.encoding;
+
+        this.m_observable = Observable.create((observer: Observer<LogEvent>) =>
         {
-            options = Object.assign(defaultOptions, options);
-            options.filename = options.filename || "";
-
-            if (options.filename.trim() == "")
-            {
+            if (this.name.pathname.trim() == "")
                 throw new Error("No file name supplied for FileLogSource.open()");
-            }
 
-            let state = new FileWatchState(options, observer);
+            let state = new FileWatchState(this.name, observer);
 
-            let watcher = chokidar.watch(state.options.filename);
+            let watcher = chokidar.watch(this.name.pathname);
 
             watcher.on('add'   , () => this.handleAdd   (state));
             watcher.on('change', () => this.handleChange(state));
@@ -74,23 +96,30 @@ export default class FileLogSource implements LogSource.ILogSource
         });
     }
 
+    public get event$(): Observable<LogEvent>
+    {
+        return this.m_observable;
+    }
+
     private updateTask(state: FileWatchState)
     {
-        state.stream = fs.createReadStream(state.options.filename, { start: state.lastRead, encoding: state.options.encoding });
+        /*
+        state.stream = fs.createReadStream(this.name.pathname, { start: state.lastRead, encoding: this.m_encoding });
   
-        state.stream.on('error', (e: any) => state.sendEvent(LogSource.EventType.Error, e.toString()));
+        state.stream.on('error', (e: any) => state.sendEvent(LogEventType.Error, e.toString()));
         state.stream.on('data', (chunk: Buffer) => state.lastRead += chunk.length);
 
         pipeline(
             state.stream,
             es.split(),
-            es.mapSync((line: string) => state.sendEvent(LogSource.EventType.NewLine, line)),
+            es.mapSync((line: string) => state.sendEvent(LogEventType.NewLine, line)),
             es.wait(() =>
             {
                 state.stream = null;
                 state.timer = null;
             })
         );
+        */
     }
 
     private dumpUpdate(state: FileWatchState)
@@ -108,11 +137,11 @@ export default class FileLogSource implements LogSource.ILogSource
         if (state.lastRead > 0)
         {
             state.lastRead = 0;
-            state.sendEvent(LogSource.EventType.Truncated);
+            state.sendEvent(LogEventType.Truncated);
         }
         else
         {
-            state.sendEvent(LogSource.EventType.Opened);
+            state.sendEvent(LogEventType.Opened);
         }
 
         this.dumpUpdate(state);
@@ -125,29 +154,8 @@ export default class FileLogSource implements LogSource.ILogSource
 
     private handleUnlink(state: FileWatchState)
     {
-        state.sendEvent(LogSource.EventType.Closed);
+        state.sendEvent(LogEventType.Closed);
     }
-}
-
-/* ================================================================================================================= */
-/**
- * Options for the FileLogSource
- */
-export class FileLogSourceOptions
-{
-    /**
-     * The file name to watch.
-     * 
-     * This is required.
-     */
-    public filename: string;
-
-    /**
-     * The character encoding for the file.
-     * 
-     * Optional, defaults to "utf8"
-     */
-    public encoding: string = "utf8";
 }
 
 /* ================================================================================================================= */

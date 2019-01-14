@@ -11,7 +11,7 @@ import { Subscription, fromEvent, merge} from "rxjs";
 import { first } from "rxjs/operators";
 
 import { EventType } from "./domEvents";
-import { LogManager } from "../../common/logging";
+import { LogManager } from "../common/logging";
 
 /* ================================================================================================================= */
 

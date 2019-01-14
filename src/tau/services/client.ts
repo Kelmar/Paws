@@ -137,6 +137,8 @@ export class ServiceClient implements IServiceClient
                 data: args
             };
 
+            console.log("Sending: " + JSON.stringify(msg));
+
             this.client.send(msg);
         });
     }

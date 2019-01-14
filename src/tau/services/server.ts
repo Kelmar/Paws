@@ -5,7 +5,7 @@ import { Subscription, Observable } from "rxjs";
 
 import { IDisposable, Type, inject, maybeDispose } from "lepton-di";
 
-import { ILogger, LogManager } from "../../common/logging";
+import { ILogger, LogManager } from "../common/logging";
 
 import { IpcMessage, IpcMessageType } from "./common";
 
