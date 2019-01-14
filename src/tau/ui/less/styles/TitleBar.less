@@ -18,6 +18,9 @@
 
         span
         {
+            background-repeat: no-repeat;
+            background-size: 16px;
+            background-position: center;
             border: none;
             display: inline-block;
             height: @titlebar-height;
@@ -29,19 +32,19 @@
 
         .minimize
         {
-            &:before { content: "v"; }
+            background-image: url(../../static/icons/minimize.svg);
             &:hover { background-color: @gray-400; }
         }
 
         .maximize
         {
-            &:before { content: "^"; }
+            background-image: url(../../static/icons/maximize.svg);
             &:hover { background-color: @gray-400; }
         }
 
         .restore
         {
-            &:before { content: "r"; }
+            background-image: url(../../static/icons/restore.svg);
             &:hover { background-color: @gray-400; }
 
             transform: rotate(180);
@@ -49,7 +52,7 @@
 
         .close
         {
-            &:before { content: "X"; }
+            background-image: url(../../static/icons/close.svg);
 
             &:hover
             {
