@@ -43,3 +43,21 @@ export interface MapPredicate<K, V>
 }
 
 /* ================================================================================================================= */
+/**
+ * Executes a callback and returns the results as a resolved or rejected Promise.
+ *
+ * @param cb The callback to execute.
+ */
+export function promiseWrap<T>(cb: () => T): Promise<T>
+{
+    try
+    {
+        return Promise.resolve(cb());
+    }
+    catch (e)
+    {
+        return Promise.reject(e);
+    }
+}
+
+/* ================================================================================================================= */

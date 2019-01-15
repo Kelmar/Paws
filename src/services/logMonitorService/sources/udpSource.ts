@@ -79,7 +79,7 @@ export class UdpSource implements ILogSource, IDisposable
 
     private onMessage(message: any, rinfo: any): void
     {
-        this.m_log.debug("Message from {rinfo}", { rinfo: rinfo });
+        this.m_log.trace("Message from {address}:{port}", rinfo);
 
         if (typeof message != "string")
         {
