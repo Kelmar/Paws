@@ -1,4 +1,8 @@
 /* ================================================================================================================= */
+/*
+ * DESCRIPTION:
+ *   String extension functions.
+ */
 /* ================================================================================================================= */
 
 import * as moment from "moment";
@@ -129,7 +133,7 @@ function formatPegasus(...args: any[]): string
         switch (typeof value)
         {
         case "undefined":
-            value = `'undefined:${name}'`;
+            value = `'undefined:${n2}'`;
             break;
 
         case "number":
@@ -144,7 +148,10 @@ function formatPegasus(...args: any[]): string
 
         case "object":
             if (value instanceof Date)
+            {
                 value = formatDate(value, options);
+                break;
+            }
             else if (typeof value["toString"] === "function")
             {
                 value = value.toString(...options);
