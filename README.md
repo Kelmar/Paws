@@ -31,7 +31,7 @@ data needs to be normalized into a standardized format.
 Some formats to consider:
 - [ ] JSON format
 - [ ] Plain text reading (awk style?)
-- [ ] Web server logs (e.g. CLS, ELF, etc.)
+- [ ] Web server logs (e.g. CLF, ELF, etc.)
 - [ ] Windows Event Logs
 - [ ] Others (API/Plug-in)
 
