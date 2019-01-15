@@ -3,6 +3,15 @@ A (not so) simple log viewer
 
 There's not much here yet.   Currently this project only displays lines it receives from a UDP port.
 
+## Building
+To build & run:
+
+```bash
+npm install
+npm run build
+npm start
+```
+
 ## Goals
 These are the current goals of the project; they are not all complete or started yet.
 
@@ -33,12 +42,3 @@ finding specific errors and logs when the volume is high.
 ### Request & Response Detection
 Detecting requests and responses and all of the relevant logs so that they can be grouped together showing the flow of
 a single request through a complex system.
-
-## Building
-To build & run:
-
-```bash
-npm install
-npm run build
-npm start
-```
