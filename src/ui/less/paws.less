@@ -8,8 +8,19 @@ ul.log
         font-weight: bold;
     }
 
-    li > p.message
+    li .message
     {
         display: inline;
+    }
+
+    li .timestamp
+    {
+        &:after { content: ' '; }
+    }
+
+    li .level
+    {
+        &:before { content: '['; }
+        &:after { content: ']: '}
     }
 }
