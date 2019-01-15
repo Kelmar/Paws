@@ -4,6 +4,7 @@ A (not so) simple log viewer
 There's not much here yet.   Currently this project only displays lines it receives from a UDP port.
 
 ## Goals
+These are the current goals of the project; they are not all complete or started yet.
 
 ### Source Selection
 Ideally a user can select their desired sources for logs from files or a network resource of some sort.
