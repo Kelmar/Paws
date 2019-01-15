@@ -74,6 +74,8 @@ export class LogView extends Control
 
         item.add(header);
         item.add(textLab);
+
+        item.addClass("log-debug");
     }
 
     private huntForMessageItems(message: any): [Date, string, string]
@@ -136,6 +138,8 @@ export class LogView extends Control
         textLab.addClass("message");
 
         item.add(textLab);
+
+        item.addClass("log-" + level.toLowerCase());
     }
 }
 

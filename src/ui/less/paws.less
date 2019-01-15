@@ -1,3 +1,7 @@
+@import "../../tau/ui/less/tau.less";
+
+@import "variables/colors.less";
+
 ul.log
 {
     list-style: none;
@@ -22,5 +26,41 @@ ul.log
     {
         &:before { content: '['; }
         &:after { content: ']: '}
+    }
+
+    li.log-verbose
+    {
+        color: @log-verbose;
+    }
+
+    li.log-trace
+    {
+        color: @log-trace;
+    }
+
+    li.log-debug
+    {
+        color: @log-debug;
+    }
+
+    li.log-info
+    {
+        color: @log-info;
+    }
+
+    li.log-warn
+    {
+        color: @log-warn;
+    }
+
+    li.log-error
+    {
+        color: @log-error;
+    }
+
+    li.log-fatal
+    {
+        color: white;
+        background-color: @log-error;
     }
 }
