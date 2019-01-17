@@ -3,17 +3,9 @@
 
 import { Type, identifier } from 'lepton-di';
 
-import { LogManager } from "../common/logging";
+import { ServiceTarget } from "./consts";
 
-import { SERVICE_TARGET, ServiceTarget } from "./consts";
-
-import { getServiceDescriptor, ServiceDescriptor, SERVICE_METADATA } from "./internal";
-
-/* ================================================================================================================= */
-
-let g_services: Map<identifier, ServiceDescriptor> = new Map();
-
-const log = LogManager.getLogger('tau:services');
+import { getServiceDescriptor, SERVICE_METADATA } from "./internal";
 
 /* ================================================================================================================= */
 /**
@@ -35,17 +27,6 @@ export function service<T>(name: identifier, targets: ServiceTarget): any
         srvcDescriptor.name = name;
         srvcDescriptor.type = type;
         srvcDescriptor.targets = targets;
-
-        if ((SERVICE_TARGET & targets) != 0)
-        {
-            if (g_services.has(name))
-            {
-                log.warn("Service {serviceName} has already been registered.", { serviceName: name });
-                return;
-            }
-
-            g_services.set(name, srvcDescriptor);
-        }
     }
 }
 
@@ -63,7 +44,9 @@ export function endpoint(target: any, name: string, descriptor: PropertyDescript
 }
 
 /* ================================================================================================================= */
-
+/**
+ * Registers an observable property as an event source.
+ */
 export function event(target: any, name: string, descriptor: PropertyDescriptor): void
 {
     let srvcDescriptor = getServiceDescriptor(target);

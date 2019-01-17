@@ -140,8 +140,6 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
 
     public notify(): void
     {
-        let m: Map<string, string> = new Map();
-
         this.m_subject.next(new ModelEvent(ModelEventType.Ping));
     }
 }

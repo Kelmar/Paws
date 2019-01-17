@@ -8,6 +8,7 @@
 export * from "./functional";
 export * from "./linkedList";
 export * from "./string";
+export * from "./compare";
 
 export * from "./logging";
 export * from "./startup";
