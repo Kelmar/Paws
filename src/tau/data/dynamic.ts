@@ -7,14 +7,7 @@ import { LogManager } from "../common/logging";
 
 /* ================================================================================================================= */
 
-export interface NotifyCallback
-{
-    (target: any, p: PropertyKey, value?: any): void;
-}
-
-/* ================================================================================================================= */
-
-const DYNAMIC_TAG: unique symbol = Symbol('tau:dynamic');
+const DYNAMIC_TAG: unique symbol = Symbol("tau:dynamic");
 
 let g_log = LogManager.getLogger("tau.dynamic");
 
@@ -31,7 +24,7 @@ export enum ModelEventType
 
 export class ModelEvent
 {
-    constructor (readonly type: ModelEventType, readonly property?: PropertyKey)
+    constructor (readonly type: ModelEventType, readonly property?: string)
     {
     }
 }
@@ -58,13 +51,13 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
         this.m_subject.complete();
     }
 
-    public get({}, p: PropertyKey, {}): any
+    public get({}, p: string, {}): any
     {
-        switch (p)
-        {
-        case DYNAMIC_TAG:
+        if ((p as any as Symbol) == DYNAMIC_TAG)
             return this;
 
+        switch (p)
+        {
         case "change$":
             return this.m_subject;
 
@@ -95,11 +88,16 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
         return value;
     }
 
-    public set({}, p: PropertyKey, value: any, {}): boolean
+    public set({}, p: string, value: any, {}): boolean
     {
+        if ((p as any as symbol) == DYNAMIC_TAG)
+        {
+            g_log.error("Attempt to set property {name} denied.", { name: p });
+            return false;
+        }
+
         switch (p)
         {
-        case DYNAMIC_TAG:
         case "change$":
         case "notify":
             g_log.error("Attempt to set property {name} denied.", { name: p });
@@ -121,7 +119,7 @@ class DynamicHandler<T extends object> implements ProxyHandler<T>
         }
     }
 
-    public deleteProperty({}, p: PropertyKey): boolean
+    public deleteProperty({}, p: string): boolean
     {
         let a: any = this.target;
         let oldVal: any = a[p];
@@ -168,6 +166,14 @@ export interface Dynamic
 
 export function makeDynamic<T extends object>(item: T): T & Dynamic
 {
+    if (item == null)
+        return null;
+
+    let dynamic = (item as any)[DYNAMIC_TAG];
+
+    if (dynamic != null)
+        return (item as any as (T & Dynamic));
+
     let p = new Proxy(item, new DynamicHandler<T>(item));
 
     return (p as any as (T & Dynamic));
