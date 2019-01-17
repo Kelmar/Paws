@@ -5,6 +5,23 @@
  */
 /* ================================================================================================================= */
 
+declare global
+{
+    interface Map<K, V>
+    {
+        reduce<TResult>(callback: MapReducer<K, V, TResult>, initial?: TResult): TResult;
+    }
+}
+
+/* ================================================================================================================= */
+
+export interface Reducer<TValue, TResult>
+{
+    (acc: TResult, value: TValue): TResult;
+}
+
+/* ================================================================================================================= */
+
 /**
  * A function describing a matching condition for the given item.
  * 
@@ -59,5 +76,25 @@ export function promiseWrap<T>(cb: () => T): Promise<T>
         return Promise.reject(e);
     }
 }
+
+/* ================================================================================================================= */
+
+export interface MapReducer<K, V, TResult>
+{
+    (acc: TResult, key: K, value: V): TResult;
+}
+
+/* ================================================================================================================= */
+
+function mapReduce<TKey, TValue, TResult>(callback: MapReducer<TKey, TValue, TResult>, initial?: TResult): TResult
+{
+    let acc: TResult = initial;
+
+    this.forEach((key: TKey, value: TValue) => { acc = callback(acc, key, value); });
+
+    return acc;
+}
+
+Map.prototype.reduce = mapReduce;
 
 /* ================================================================================================================= */

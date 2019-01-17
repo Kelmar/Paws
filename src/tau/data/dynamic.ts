@@ -15,9 +15,27 @@ let g_log = LogManager.getLogger("tau.dynamic");
 
 export enum ModelEventType
 {
+    /**
+     * A call to notify() was made.
+     *
+     * Used to update all properties/items on a model.
+     */
     Ping,
+
+    /**
+     * A specific property was changed.
+     */
     Changed,
-    Deleted
+
+    /**
+     * A property or item was removed.
+     */
+    Deleted,
+
+    /**
+     * An item was added to the collection.
+     */
+    Added
 }
 
 /* ================================================================================================================= */

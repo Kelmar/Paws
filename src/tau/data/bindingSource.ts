@@ -1,152 +1,159 @@
 /* ================================================================================================================= */
 /* ================================================================================================================= */
 
-import { Subscription, Observable } from "rxjs";
+import { Subscription, Observable, Subject } from "rxjs";
+import { filter } from "rxjs/operators";
 
 import { IDisposable } from "lepton-di";
+
+import { } from "../common";
 
 import { Dynamic, makeDynamic, ModelEvent, ModelEventType } from "./dynamic";
 
 /* ================================================================================================================= */
 
-class TargetBindings implements IDisposable
+class PropertyBinding implements IDisposable
 {
-    // One to many, a source property can be bound to multiple targets.
-    private readonly m_sourceToTarget: Map<string, Set<string>> = new Map();
+    public sourceProperty: string;
 
-    // One to one, a target cannot be bound to multiple source properties.
-    private readonly m_targetToSource: Map<string, string> = new Map();
+    private readonly m_targetSubscription: Subscription = null;
+    private readonly m_sourceSubscription: Subscription;
 
-    private readonly m_subscriptions: Map<string, Subscription> = new Map();
+    /**
+     * Flag for preventing recursion durring updates.
+     */
+    private m_updating: boolean = false;
 
-    private readonly m_targetUpdate: Set<string> = new Set();
-
-    constructor(public readonly target: any)
+    constructor (
+        public readonly target: any,
+        public readonly source: BindingSource,
+        public readonly targetProperty: string)
     {
+        this.m_sourceSubscription = source.change$
+            .pipe(filter<ModelEvent>(x => x.type != ModelEventType.Changed || x.property == this.sourceProperty))
+            .subscribe({
+                next: () => this.update()
+            });
+
+        // Check to see if there is an observable with the same name on the target
+        let obsProp = targetProperty + '$';
+
+        let ob$ = this.target[obsProp];
+
+        if (ob$ && ob$ instanceof Observable)
+        {
+            this.m_targetSubscription = ob$.subscribe({
+                next: value => this.targetUpdated(value)
+            });
+        }
     }
 
     public dispose()
     {
-        for (let [_, sub] of this.m_subscriptions)
-            sub.unsubscribe();
+        if (this.m_targetSubscription != null)
+            this.m_targetSubscription.unsubscribe();
 
-        this.m_subscriptions.clear();
+        this.m_sourceSubscription.unsubscribe();
     }
 
-    public setBinding(targetProperty: string, sourceProperty: string): void
+    /**
+     * Calls a callback provided we are not in an update phase.
+     *
+     * Also sets the guard flag so that subsequent calls to this function will not execute.
+     *
+     * @param callback The callback to execute
+     */
+    private guarded(callback: Function): void
     {
-        let oldSource = this.m_targetToSource.get(targetProperty);
-
-        if (oldSource != null)
-        {
-            let sets = this.m_sourceToTarget.get(oldSource);
-            sets.delete(targetProperty);
-
-            if (sourceProperty == null)
-            {
-                this.m_targetToSource.delete(targetProperty);
-
-                let sub = this.m_subscriptions.get(targetProperty);
-                this.m_subscriptions.delete(targetProperty);
-
-                if (sub != null)
-                    sub.unsubscribe();
-
-                return;
-            }
-        }
-        else if (sourceProperty != null)
-        {
-            // Check to see if there is an observable with the same name.
-            let obsProp = targetProperty + '$';
-
-            let ob$ = this.target[obsProp];
-
-            if (ob$ != null && ob$ instanceof Observable)
-            {
-                let sub = ob$.subscribe({
-                    next: () => this.targetUpdated(targetProperty)
-                });
-
-                this.m_subscriptions.set(targetProperty, sub);
-            }
-        }
-
-        this.m_targetToSource.set(targetProperty, sourceProperty);
-
-        let sets = this.m_sourceToTarget.get(sourceProperty) || new Set();
-        sets.add(targetProperty);
-        this.m_sourceToTarget.set(sourceProperty, sets);
-    }
-
-    private guardedUpdate(targetProperty: string, value: any): void
-    {
-        if (this.m_targetUpdate.has(targetProperty))
+        if (this.m_updating)
             return;
-        
-        this.m_targetUpdate.add(targetProperty);
+
+        this.m_updating = true;
 
         try
         {
-            this.target[targetProperty] = value;
+            callback();
         }
         finally
         {
-            this.m_targetUpdate.delete(targetProperty);
+            this.m_updating = false;
         }
     }
 
-    private targetUpdated(targetProperty: string): void
+    /**
+     * Updates a target with the bound source property
+     */
+    public update(): void
     {
-        if (this.m_targetUpdate.has(targetProperty))
-            return;
-
-        // Prevent some event spam by blocking updates to this property.
-        this.m_targetUpdate.add(targetProperty);
-
-        try
-        {
-            // Update the source with the new value.
-        }
-        finally
-        {
-            this.m_targetUpdate.delete(targetProperty);
-        }
+        let newValue = this.sourceProperty ? this.source.dataSource[this.sourceProperty] : '';
+        this.guarded(() => { this.target[this.targetProperty] = newValue; });
     }
 
-    public update(sourceProperty: string, value: any): void
+    /**
+     * Updates a source with the given value.
+     *
+     * This is the handler for a two-way binding.  (E.g. an input field updated with a new value.)
+     *
+     * @param value The value to update to.
+     */
+    private targetUpdated(value: any): void
     {
-        let sets = this.m_sourceToTarget.get(sourceProperty);
+        if (!this.sourceProperty)
+            return; // Not bound to a source property, no need to update.
 
-        if (sets == null)
-            return;
-
-        for (let targetProperty of sets)
-            this.guardedUpdate(targetProperty, value);
-    }
-
-    public updateAll(source: any): void
-    {
-        for (let [sourceProperty, sets] of this.m_sourceToTarget)
-        {
-            let value = source[sourceProperty];
-
-            for (let targetProperty of sets)
-                this.guardedUpdate(targetProperty, value);
-        }
-    }
-
-    public isEmpty(): boolean
-    {
-        return this.m_targetToSource.size == 0;
+        this.guarded(() => { this.source.dataSource[this.sourceProperty] = value; });
     }
 }
 
 /* ================================================================================================================= */
 
+class TargetBindings implements IDisposable
+{
+    private readonly m_byProperty: Map<string, PropertyBinding> = new Map();
+
+    constructor (public readonly target: any, public readonly source: BindingSource)
+    {
+    }
+
+    public dispose(): void
+    {
+        for (let [_, pb] of this.m_byProperty)
+            pb.dispose();
+    }
+
+    public get count(): number
+    {
+        return this.m_byProperty.reduce((a, _, v) => a + (v.sourceProperty ? 1 : 0), 0);
+    }
+
+    public set(targetProperty: string, sourceProperty: string): void
+    {
+        let pb = this.m_byProperty.get(targetProperty);
+
+        if (pb == null)
+        {
+            pb = new PropertyBinding(this.target, this.source, targetProperty);
+            this.m_byProperty.set(targetProperty, pb);
+        }
+
+        pb.sourceProperty = sourceProperty;
+    }
+
+    public update()
+    {
+        for (let [_, binding] of this.m_byProperty)
+            binding.update();
+    }
+}
+
+/* ================================================================================================================= */
+/**
+ * Handles binding of a data source to multiple target objects.
+ */
 export class BindingSource implements IDisposable
 {
     private readonly m_bindings: Map<any, TargetBindings> = new Map();
+    private readonly m_subject: Subject<ModelEvent>;
 
     private m_dataSource: Dynamic = null;
 
@@ -154,10 +161,13 @@ export class BindingSource implements IDisposable
 
     constructor()
     {
+        this.m_subject = new Subject();
     }
 
     public dispose(): void
     {
+        this.m_subject.complete();
+
         if (this.m_subscription)
             this.m_subscription.unsubscribe();
 
@@ -170,6 +180,11 @@ export class BindingSource implements IDisposable
         this.m_subscription = null;
     }
 
+    public get change$(): Observable<ModelEvent>
+    {
+        return this.m_subject;
+    }
+
     public get dataSource(): any
     {
         return this.m_dataSource;
@@ -178,59 +193,72 @@ export class BindingSource implements IDisposable
     public set dataSource(value: any)
     {
         if (this.m_subscription)
+        {
             this.m_subscription.unsubscribe();
+            this.m_subscription = null;
+        }
 
         this.m_dataSource = makeDynamic(value);
 
         if (this.m_dataSource)
         {
             this.m_subscription = this.m_dataSource.change$.subscribe({
-                next: event => this.modelChanged(event)
+                next: event => this.handleEvent(event)
             });
         }
 
-        this.updateAllBindings();
+        this.updateAll();
     }
 
+    /**
+     * Establishes (or removes) a binding on a target object.
+     *
+     * If the sourceProperty is not provided, then an existing binding for the target object will be removed.
+     * 
+     * If the target object also defines a property that is an observable of the same name ending with a '$', then a two
+     * way binding will be established.  Where by events from the target's observable will be sent to the source
+     * property.
+     *
+     * @param target The target object to which changes will be sent.
+     * @param targetProperty The property changes will be sent.
+     * @param sourceProperty The source property where changes will be read.
+     */
     public setBinding(target: any, targetProperty: string, sourceProperty?: string): void
     {
-        let bindings = this.m_bindings.get(target) || new TargetBindings(target);
+        let bindings = this.m_bindings.get(target);
 
-        bindings.setBinding(targetProperty, sourceProperty);
-
-        if (bindings.isEmpty())
-            this.m_bindings.delete(target);
-        else
-            this.m_bindings.set(target, bindings);
-    }
-
-    private updateAllBindings(): void
-    {
-        for (let [_, bindings] of this.m_bindings)
-            bindings.updateAll(this.m_dataSource);
-    }
-
-    private modelChanged(event: ModelEvent): void
-    {
-        switch (event.type)
+        if (!bindings)
         {
-        case ModelEventType.Ping:
-            this.updateAllBindings();
-            break;
+            if (!sourceProperty)
+                return; // Nothing to do.
 
-        case ModelEventType.Changed:
-        case ModelEventType.Deleted:
-            this.propertyUpdated(event.property);
-            break;
+            bindings = new TargetBindings(target, this);
+            this.m_bindings.set(target, bindings);
+        }
+
+        bindings.set(targetProperty, sourceProperty);
+
+        if (bindings.count == 0)
+        {
+            // Remove from list
+
+            this.m_bindings.delete(target);
+            bindings.dispose();
         }
     }
 
-    private propertyUpdated(propertyName: string): void
+    private handleEvent(event: ModelEvent): void
     {
-        let newValue = this.m_dataSource ? this.m_dataSource[propertyName] : '';
+        if (event.type == ModelEventType.Ping)
+            this.updateAll();
+        else
+            this.m_subject.next(event);
+    }
 
+    public updateAll(): void
+    {
         for (let [_, bindings] of this.m_bindings)
-            bindings.update(propertyName, newValue);
+            bindings.update();
     }
 }
 

@@ -5,7 +5,7 @@
  */
 /* ================================================================================================================= */
 
-import { Predicate, toPredicate } from "./functional";
+import { Predicate, toPredicate, Reducer } from "./functional";
 
 /* ================================================================================================================= */
 
@@ -205,14 +205,29 @@ export class LinkedList<T> implements Iterable<T>
      *
      * @remarks Complexity: O(n)
      *
-     * @param cb The callback function to execute.
+     * @param callback The callback function to execute.
      */
-    public forEach(cb: (x: T) => void): void
+    public forEach(callback: (x: T) => void): void
     {
         let n: Node<T>;
 
         for (let i = this.m_first; i && (n = i.next, true); i = n)
-            cb(i.item);
+            callback(i.item);
+    }
+
+    /**
+     * Executes a function for all items in the list in reverse order.
+     *
+     * This function is safe against removals while running.
+     *
+     * @remarks Complexity: O(n)
+     *
+     * @param callback The callback function to execute.
+     */
+    public forEachBackwards(callback: (x: T) => void): void
+    {
+        for (let i of this.backwards())
+            callback(i);
     }
 
     /**
@@ -228,17 +243,58 @@ export class LinkedList<T> implements Iterable<T>
             yield cb(item);
     }
 
+    /**
+     * Executes a callback accumulating values from left to right.
+     *
+     * @param callback The callback to execute.
+     * @param initial The initial value to start with
+     */
+    public reduce<TResult>(callback: Reducer<T, TResult>, initial?: TResult): TResult
+    {
+        let acc: TResult = initial;
+
+        this.forEach(v => { acc = callback(acc, v); });
+
+        return acc;
+    }
+
+    /**
+     * Executes a callback accumulating values from right to left.
+     *
+     * @param callback The callback to execute.
+     * @param initial The initial value to start with
+     */
+    public reduceRight<TResult>(callback: Reducer<T, TResult>, initial?: TResult): TResult
+    {
+        let acc: TResult = initial;
+
+        this.forEachBackwards(v => { acc = callback(acc, v); });
+        
+        return acc;
+    }
+
+    /**
+     * Returns an iterator that walks the list in reverse insert order.
+     */
+    public *backwards(): IterableIterator<T>
+    {
+        let p: Node<T>;
+
+        for (let i = this.m_last; i && (p = i.prev, true); i = p)
+            yield i.item;
+    }
+
     [Symbol.iterator](): Iterator<T>
     {
         let current = this.m_first;
 
         return {
-            next: () =>
+            next(): IteratorResult<T>
             {
                 let rval = {
                     done: current == null,
                     value: current ? current.item : undefined
-                }
+                };
 
                 current = current ? current.next : null;
 
