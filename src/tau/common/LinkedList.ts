@@ -55,7 +55,7 @@ export class LinkedList<T> implements Iterable<T>
      *
      * @remarks Complexity: O(1)
      */
-    public clear()
+    public clear(): void
     {
         this.m_first = this.m_last = null;
         this.m_length = 0;
@@ -199,6 +199,20 @@ export class LinkedList<T> implements Iterable<T>
     }
 
     /**
+     * Returns items in the list that match the given predicate.
+     *
+     * @param predicate The predicate to match with.
+     */
+    public *filter(predicate: Predicate<T>): IterableIterator<T>
+    {
+        for (let i of this)
+        {
+            if (predicate(i))
+                yield i;
+        }
+    }
+
+    /**
      * Executes a function for all items in the list.
      *
      * This function is safe against removals while running.
@@ -235,12 +249,12 @@ export class LinkedList<T> implements Iterable<T>
      *
      * @remarks Complexity: O(n)
      *
-     * @param cb The conversion callback to execute.
+     * @param callback The conversion callback to execute.
      */
-    public *map<U>(cb: (x: T) => U): IterableIterator<U>
+    public *map<U>(callback: (x: T) => U): IterableIterator<U>
     {
         for (let item of this)
-            yield cb(item);
+            yield callback(item);
     }
 
     /**

@@ -8,6 +8,8 @@ import { Dynamic } from "./dynamic";
 export * from "./dynamicBase"
 export * from "./dynamicObject";
 export * from "./dynamicSet";
+export * from "./dynamicMap";
+export * from "./dynamicList";
 
 /* ================================================================================================================= */
 

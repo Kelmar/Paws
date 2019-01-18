@@ -10,7 +10,7 @@ import { IDisposable } from "lepton-di";
 import { isCollection, isSet, isMap, isLinkedList } from "../common";
 
 import { ModelEvent } from "./common";
-import { DYNAMIC_TAG, DynamicObject, DynamicSet } from "./internal";
+import { DYNAMIC_TAG, DynamicObject, DynamicSet, DynamicMap, DynamicList } from "./internal";
 
 /* ================================================================================================================= */
 
@@ -44,11 +44,9 @@ export function makeDynamic<T extends object>(item: T): T & Dynamic
     else if (isSet(item))
         dynamic = new DynamicSet(item);
     else if (isMap(item))
-    {
-    }
+        dynamic = new DynamicMap(item);
     else if (isLinkedList(item))
-    {
-    }
+        dynamic = new DynamicList(item);
     else if (isArray(item))
     {
     }

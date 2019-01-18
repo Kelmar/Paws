@@ -3,6 +3,8 @@
 
 export enum ModelEventType
 {
+    // Object events
+
     /**
      * A call to notify() was made.
      *
