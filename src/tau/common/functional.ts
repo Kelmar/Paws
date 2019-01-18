@@ -98,3 +98,10 @@ function mapReduce<TKey, TValue, TResult>(callback: MapReducer<TKey, TValue, TRe
 Map.prototype.reduce = mapReduce;
 
 /* ================================================================================================================= */
+
+export function isObject(value: any): value is object
+{
+    return (typeof value == "object");
+}
+
+/* ================================================================================================================= */

@@ -8,7 +8,8 @@ import { IDisposable } from "lepton-di";
 
 import { } from "../common";
 
-import { Dynamic, makeDynamic, ModelEvent, ModelEventType } from "./dynamic";
+import { ModelEvent, ModelEventType } from "./common";
+import { Dynamic, makeDynamic } from "./dynamic";
 
 /* ================================================================================================================= */
 
@@ -85,7 +86,7 @@ class PropertyBinding implements IDisposable
      */
     public update(): void
     {
-        let newValue = this.sourceProperty ? this.source.dataSource[this.sourceProperty] : '';
+        let newValue = this.source.read(this.sourceProperty);
         this.guarded(() => { this.target[this.targetProperty] = newValue; });
     }
 
@@ -117,16 +118,19 @@ class TargetBindings implements IDisposable
 
     public dispose(): void
     {
-        for (let [_, pb] of this.m_byProperty)
+        for (let [{}, pb] of this.m_byProperty)
             pb.dispose();
     }
 
+    /**
+     * Returns the number of active bindings for the target.
+     */
     public get count(): number
     {
         return this.m_byProperty.reduce((a, _, v) => a + (v.sourceProperty ? 1 : 0), 0);
     }
 
-    public set(targetProperty: string, sourceProperty: string): void
+    public set(targetProperty: string, sourceProperty?: string): void
     {
         let pb = this.m_byProperty.get(targetProperty);
 
@@ -141,7 +145,7 @@ class TargetBindings implements IDisposable
 
     public update()
     {
-        for (let [_, binding] of this.m_byProperty)
+        for (let [{}, binding] of this.m_byProperty)
             binding.update();
     }
 }
@@ -171,7 +175,7 @@ export class BindingSource implements IDisposable
         if (this.m_subscription)
             this.m_subscription.unsubscribe();
 
-        for (let [_, bindings] of this.m_bindings)
+        for (let [{}, bindings] of this.m_bindings)
             bindings.dispose();
 
         this.m_bindings.clear();
@@ -208,6 +212,19 @@ export class BindingSource implements IDisposable
         }
 
         this.updateAll();
+    }
+
+    /**
+     * Reads a property from the currently bound data source object.
+     *
+     * @param property The property to read.
+     */
+    public read(property: string): any
+    {
+        if (!this.m_dataSource || !property)
+            return '';
+
+        return (this.m_dataSource as any)[property] || '';
     }
 
     /**
@@ -257,7 +274,7 @@ export class BindingSource implements IDisposable
 
     public updateAll(): void
     {
-        for (let [_, bindings] of this.m_bindings)
+        for (let [{}, bindings] of this.m_bindings)
             bindings.update();
     }
 }
